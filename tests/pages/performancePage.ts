@@ -631,438 +631,272 @@ class PerformancePage extends CommonClass {
 		return this.performanceElements.platformFilter();
 	}
 
-	// FIXME:
 	// get the text from the list of the selected week
-	// checkTextOfWeeksSelected(WeekNumbersFromList: any, minWaitTime: any) {
-	// 	return new Cypress.Promise((resolve: (arg0: any) => void) => {
-	// 		let getText;
-	// 		this.performanceElements
-	// 			.weekText(WeekNumbersFromList, { timeout: minWaitTime })
-	// 			.then((value: { text: () => any }) => {
-	// 				getText = value.text();
-	// 				resolve(getText);
-	// 			});
-	// 	});
-	// }
+	async checkTextOfWeeksSelected(WeekNumbersFromList: string) {
+		return await this.performanceElements
+			.weekText(WeekNumbersFromList)
+			.innerText();
+	}
 
 	// // get selected date from list and the date coming in into calender title post selection
-	// verifyDateSelectedWithDateDisplayesOnCalender(
-	// 	WeekNumbersFromList: any,
-	// 	minWaitTime: any
-	// ) {
-	// 	// get the date of calender title and verify with the selected date range
-	// 	let getSelectedDateFilterDates: any;
-	// 	return this.performanceElements
-	// 		.getTheDatesFromCalenderTitle(WeekNumbersFromList, {
-	// 			timeout: minWaitTime
-	// 		})
-	// 		.then((value: { text: () => any }) => {
-	// 			getSelectedDateFilterDates = value.text();
-	// 			this.performanceElements
-	// 				.getTheSelectedDate()
-	// 				.then((val: { text: () => any }) => {
-	// 					const getCalenderTitleDateText = val.text();
-	// 					return cy.wrap({
-	// 						getSelectedDateFilterDates,
-	// 						getCalenderTitleDateText
-	// 					});
-	// 				});
-	// 		});
-	// }
+	async verifyDateSelectedWithDateDisplayesOnCalender(
+		WeekNumbersFromList: any
+	) {
+		// Get the date from the calendar title and verify with the selected date range
+		let getSelectedDateFilterDates =
+			(await this.performanceElements
+				.getTheDatesFromCalenderTitle(WeekNumbersFromList)
+				.innerText()) ?? '';
 
-	// // current month visible in date filter calender
-	// currentMonthInCalender(currentMonth: any) {
-	// 	return this.performanceElements.currentMonthDateFilter(currentMonth);
-	// }
+		// Get the selected date
+		const getCalenderTitleDateText =
+			(await this.performanceElements.getTheSelectedDate().innerText()) ??
+			'';
+
+		// Returning both dates for comparison or further processing
+		return {
+			getSelectedDateFilterDates,
+			getCalenderTitleDateText
+		};
+	}
+	// current month visible in date filter calender
+	async currentMonthInCalender(currentMonth: string) {
+		return this.performanceElements.currentMonthDateFilter(currentMonth);
+	}
 
 	// // choose start and end date using custom date filter..here we are selecting Week to date using custom
-	// clickStartAndEndDate(
-	// 	weekToDateInList: any,
-	// 	customFromDateFilter: any,
-	// 	minWaitTime: any
-	// ) {
-	// 	let getText;
-	// 	let endreversedDateReceived;
-	// 	let startreversedDateReceived: string | number | Date;
-	// 	return this.performanceElements
-	// 		.weekToDate(weekToDateInList, { timeout: minWaitTime })
-	// 		.then((value: { text: () => any }) => {
-	// 			getText = value.text();
-	// 			//click on custom menu button
-	// 			this.performanceElements
-	// 				.calenderFilterBtn(customFromDateFilter, {
-	// 					timeout: minWaitTime
-	// 				})
-	// 				.click();
-	// 			this.splitDate(getText).then(
-	// 				(dates: { firstDate: any; secondDate: any }) => {
-	// 					const firstDateRetrieved = dates.firstDate;
-	// 					const secondDateRetrieved = dates.secondDate;
-	// 					this.formatDate(firstDateRetrieved).then(
-	// 						(datenumeric: any) => {
-	// 							this.reverseDate(datenumeric).then(
-	// 								(reversedDate: any) => {
-	// 									startreversedDateReceived =
-	// 										reversedDate;
-	// 									this.formatDate(
-	// 										secondDateRetrieved
-	// 									).then((datenumeric: any) => {
-	// 										this.reverseDate(datenumeric).then(
-	// 											(reversedDate: any) => {
-	// 												endreversedDateReceived =
-	// 													reversedDate;
-	// 												// Convert the received date string to a Date object
-	// 												const targetDate = new Date(
-	// 													startreversedDateReceived
-	// 												);
-	// 												// Define the start of the week (January 27th, 2024 in your case)
-	// 												const weekStart = new Date(
-	// 													2024,
-	// 													0,
-	// 													27
-	// 												);
-	// 												// Calculate the number of days between the start of the week and the target date
-	// 												const daysDifference =
-	// 													Math.floor(
-	// 														(targetDate -
-	// 															weekStart) /
-	// 															(24 *
-	// 																60 *
-	// 																60 *
-	// 																1000)
-	// 													);
-	// 												// Calculate the week number
-	// 												const startDateWeekNumber =
-	// 													Math.ceil(
-	// 														(daysDifference +
-	// 															1) /
-	// 															7
-	// 													);
-	// 												// Log the calculated week number
-	// 												const secondTargetDate =
-	// 													new Date(
-	// 														endreversedDateReceived
-	// 													);
-	// 												const secondYearStart =
-	// 													new Date(
-	// 														secondTargetDate.getFullYear(),
-	// 														0,
-	// 														1
-	// 													);
-	// 												const secondDaysDifference =
-	// 													Math.floor(
-	// 														(secondTargetDate -
-	// 															secondYearStart) /
-	// 															(24 *
-	// 																60 *
-	// 																60 *
-	// 																1000)
-	// 													);
-	// 												const secondStartDateWeekNumber =
-	// 													Math.floor(
-	// 														secondDaysDifference /
-	// 															7
-	// 													) + 1;
-	// 												this.forwardButtonInCalender(
-	// 													{
-	// 														timeout: minWaitTime
-	// 													}
-	// 												).click();
-	// 												this.getMonthYear(
-	// 													firstDateRetrieved
-	// 												).then(
-	// 													(
-	// 														monthYearOfStartDates:
-	// 															| string
-	// 															| string[]
-	// 													) => {
-	// 														const clickPrevBtn =
-	// 															() => {
-	// 																cy.wait(
-	// 																	1000
-	// 																);
-	// 																this.page
-	// 																	.locator(
-	// 																		"//div[contains(@class,'MuiGrid-root MuiGrid-container MuiGrid-grid-xs-')]/div[2]/div/div",
-	// 																		{
-	// 																			timeout:
-	// 																				minWaitTime
-	// 																		}
-	// 																	)
-	// 																	.then(
-	// 																		(value: {
-	// 																			text: () => any;
-	// 																		}) => {
-	// 																			const currentMonth =
-	// 																				value.text();
-	// 																			const [
-	// 																				month,
-	// 																				year
-	// 																			] =
-	// 																				currentMonth.split(
-	// 																					' '
-	// 																				);
-	// 																			const currentMonthAfterSplit = `${month.slice(
-	// 																				0,
-	// 																				3
-	// 																			)} ${year}`;
-	// 																			if (
-	// 																				!monthYearOfStartDates.includes(
-	// 																					currentMonthAfterSplit
-	// 																				)
-	// 																			) {
-	// 																				this.backButtonInCalender().click();
-	// 																				clickPrevBtn();
-	// 																			}
-	// 																		}
-	// 																	);
-	// 															};
-	// 														clickPrevBtn({
-	// 															timeout:
-	// 																minWaitTime
-	// 														});
-	// 														cy.wait(
-	// 															minWaitTime
-	// 														);
-	// 													}
-	// 												);
-	// 												return cy.wrap({
-	// 													startreversedDateReceived,
-	// 													endreversedDateReceived,
-	// 													firstDateRetrieved,
-	// 													secondDateRetrieved
-	// 												});
-	// 											}
-	// 										);
-	// 									});
-	// 								}
-	// 							);
-	// 						}
-	// 					);
-	// 				}
-	// 			);
-	// 		});
-	// }
+	async clickStartAndEndDate(
+		weekToDateInList: any,
+		customFromDateFilter: any
+	) {
+		let endreversedDateReceived: string;
+		let startreversedDateReceived: string;
 
-	// //select a specified date only
+		// Get the text from weekToDate
+		let getText =
+			(await this.performanceElements
+				.weekToDate(weekToDateInList)
+				.innerText()) ?? '';
 
-	// // choose start and end date using custom date filter..here we are selecting Week to date using custom
-	// clickSpecificStartAndEndDate(
-	// 	weekToDateInList: any,
-	// 	customFromDateFilter: any,
-	// 	minWaitTime: any
-	// ) {
-	// 	let getText;
-	// 	let endreversedDateReceived;
-	// 	let startreversedDateReceived: string | number | Date;
-	// 	return this.performanceElements
-	// 		.weekToDate(weekToDateInList, { timeout: minWaitTime })
-	// 		.then((value: any) => {
-	// 			getText = 'Apr 20, 2024 - Apr 26, 2024';
-	// 			//click on custom menu button
-	// 			this.performanceElements
-	// 				.calenderFilterBtn(customFromDateFilter, {
-	// 					timeout: minWaitTime
-	// 				})
-	// 				.click();
-	// 			this.splitDate(getText).then(
-	// 				(dates: { firstDate: any; secondDate: any }) => {
-	// 					const firstDateRetrieved = dates.firstDate;
-	// 					const secondDateRetrieved = dates.secondDate;
-	// 					this.formatDate(firstDateRetrieved).then(
-	// 						(datenumeric: any) => {
-	// 							this.reverseDate(datenumeric).then(
-	// 								(reversedDate: any) => {
-	// 									startreversedDateReceived =
-	// 										reversedDate;
-	// 									this.formatDate(
-	// 										secondDateRetrieved
-	// 									).then((datenumeric: any) => {
-	// 										this.reverseDate(datenumeric).then(
-	// 											(reversedDate: any) => {
-	// 												endreversedDateReceived =
-	// 													reversedDate;
-	// 												// Convert the received date string to a Date object
-	// 												const targetDate = new Date(
-	// 													startreversedDateReceived
-	// 												);
-	// 												// Define the start of the week (January 27th, 2024 in your case)
-	// 												const weekStart = new Date(
-	// 													2024,
-	// 													0,
-	// 													27
-	// 												);
-	// 												// Calculate the number of days between the start of the week and the target date
-	// 												const daysDifference =
-	// 													Math.floor(
-	// 														(targetDate -
-	// 															weekStart) /
-	// 															(24 *
-	// 																60 *
-	// 																60 *
-	// 																1000)
-	// 													);
-	// 												// Calculate the week number
-	// 												const startDateWeekNumber =
-	// 													Math.ceil(
-	// 														(daysDifference +
-	// 															1) /
-	// 															7
-	// 													);
-	// 												// Log the calculated week number
-	// 												const secondTargetDate =
-	// 													new Date(
-	// 														endreversedDateReceived
-	// 													);
-	// 												const secondYearStart =
-	// 													new Date(
-	// 														secondTargetDate.getFullYear(),
-	// 														0,
-	// 														1
-	// 													);
-	// 												const secondDaysDifference =
-	// 													Math.floor(
-	// 														(secondTargetDate -
-	// 															secondYearStart) /
-	// 															(24 *
-	// 																60 *
-	// 																60 *
-	// 																1000)
-	// 													);
-	// 												const secondStartDateWeekNumber =
-	// 													Math.floor(
-	// 														secondDaysDifference /
-	// 															7
-	// 													) + 1;
-	// 												this.forwardButtonInCalender(
-	// 													{
-	// 														timeout: minWaitTime
-	// 													}
-	// 												).click();
-	// 												this.getMonthYear(
-	// 													firstDateRetrieved
-	// 												).then(
-	// 													(
-	// 														monthYearOfStartDates:
-	// 															| string
-	// 															| string[]
-	// 													) => {
-	// 														const clickPrevBtn =
-	// 															() => {
-	// 																this.page
-	// 																	.locator(
-	// 																		"//div[contains(@class,'MuiGrid-root MuiGrid-container MuiGrid-grid-xs-')]/div[3]/div/div",
-	// 																		{
-	// 																			timeout:
-	// 																				minWaitTime
-	// 																		}
-	// 																	)
-	// 																	.then(
-	// 																		(value: {
-	// 																			text: () => any;
-	// 																		}) => {
-	// 																			const currentMonth =
-	// 																				value.text();
-	// 																			const [
-	// 																				month,
-	// 																				year
-	// 																			] =
-	// 																				currentMonth.split(
-	// 																					' '
-	// 																				);
-	// 																			const currentMonthAfterSplit = `${month.slice(
-	// 																				0,
-	// 																				3
-	// 																			)} ${year}`;
-	// 																			if (
-	// 																				!monthYearOfStartDates.includes(
-	// 																					currentMonthAfterSplit
-	// 																				)
-	// 																			) {
-	// 																				this.backButtonInCalender().click();
-	// 																				clickPrevBtn();
-	// 																			}
-	// 																		}
-	// 																	);
-	// 															};
-	// 														clickPrevBtn({
-	// 															timeout:
-	// 																minWaitTime
-	// 														});
-	// 														cy.wait(
-	// 															minWaitTime
-	// 														);
-	// 														this.page
-	// 															.locator(
-	// 																"//*[@id='week-" +
-	// 																	startDateWeekNumber +
-	// 																	"']"
-	// 															)
-	// 															.click();
-	// 													}
-	// 												);
-	// 												return cy.wrap({
-	// 													startreversedDateReceived,
-	// 													endreversedDateReceived,
-	// 													firstDateRetrieved,
-	// 													secondDateRetrieved
-	// 												});
-	// 											}
-	// 										);
-	// 									});
-	// 								}
-	// 							);
-	// 						}
-	// 					);
-	// 				}
-	// 			);
-	// 		});
-	// }
+		// Click on custom menu button
+		await this.performanceElements
+			.calenderFilterBtn(customFromDateFilter)
+			.click();
+
+		// Split the date from getText
+		const { firstDate, secondDate } = await this.splitDate(getText);
+
+		// Format and reverse the first date
+		const firstDateNumeric = await this.formatDate(firstDate);
+		startreversedDateReceived = await this.reverseDate(firstDateNumeric);
+
+		// Format and reverse the second date
+		const secondDateNumeric = await this.formatDate(secondDate);
+		endreversedDateReceived = await this.reverseDate(secondDateNumeric);
+
+		// Convert the received date string to a Date object
+		const targetDate = new Date(startreversedDateReceived);
+
+		// Define the start of the week (January 27th, 2024 in your case)
+		const weekStart = new Date(2024, 0, 27);
+
+		// Calculate the number of days between the start of the week and the target date
+		const daysDifference = Math.floor(
+			(targetDate.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000)
+		);
+
+		// Calculate the week number
+		const startDateWeekNumber = Math.ceil((daysDifference + 1) / 7);
+
+		// Calculate the second target date
+		const secondTargetDate = new Date(endreversedDateReceived);
+		const secondYearStart = new Date(secondTargetDate.getFullYear(), 0, 1);
+		const secondDaysDifference = Math.floor(
+			(secondTargetDate.getTime() - secondYearStart.getTime()) /
+				(24 * 60 * 60 * 1000)
+		);
+
+		// Calculate the week number for the second date
+		const secondStartDateWeekNumber =
+			Math.floor(secondDaysDifference / 7) + 1;
+
+		// Click the forward button in the calendar
+		await (await this.forwardButtonInCalender()).click();
+
+		// Get the month and year of the first date
+		const monthYearOfStartDates = await this.getMonthYear(firstDate);
+
+		// Function to click the previous button in the calendar until the correct month/year is displayed
+		const clickPrevBtn = async () => {
+			await this.page.waitForTimeout(1000);
+			const currentMonthElement = this.page.locator(
+				"//div[contains(@class,'MuiGrid-root MuiGrid-container MuiGrid-grid-xs-')]/div[2]/div/div"
+			);
+			const currentMonthText =
+				(await currentMonthElement.textContent()) ?? '';
+			const [month, year] = currentMonthText.split(' ');
+			const currentMonthAfterSplit = `${month.slice(0, 3)} ${year}`;
+
+			if (!monthYearOfStartDates.includes(currentMonthAfterSplit)) {
+				await (await this.backButtonInCalender()).click();
+				await clickPrevBtn();
+			}
+		};
+
+		// Click the previous button if necessary
+		await clickPrevBtn();
+
+		// Wait for the required time
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		// Return the reversed and retrieved dates
+		return {
+			startreversedDateReceived,
+			endreversedDateReceived,
+			firstDate,
+			secondDate
+		};
+	}
+
+	// select a specified date only
+	// choose start and end date using custom date filter..here we are selecting Week to date using custom
+	async clickSpecificStartAndEndDate(
+		weekToDateInList: any,
+		customFromDateFilter: any
+	) {
+		let getText = 'Apr 20, 2024 - Apr 26, 2024';
+		let endreversedDateReceived: string;
+		let startreversedDateReceived: string;
+
+		// Get the week to date and click on custom menu button
+		await this.performanceElements
+			.calenderFilterBtn(customFromDateFilter)
+			.click();
+
+		// Split the date from getText
+		const dates = await this.splitDate(getText);
+		const firstDateRetrieved = dates.firstDate;
+		const secondDateRetrieved = dates.secondDate;
+
+		// Format and reverse the first date
+		const firstDateNumeric = await this.formatDate(firstDateRetrieved);
+		startreversedDateReceived = await this.reverseDate(firstDateNumeric);
+
+		// Format and reverse the second date
+		const secondDateNumeric = await this.formatDate(secondDateRetrieved);
+		endreversedDateReceived = await this.reverseDate(secondDateNumeric);
+
+		// Convert the received date string to a Date object
+		const targetDate = new Date(startreversedDateReceived);
+
+		// Define the start of the week (January 27th, 2024 in this case)
+		const weekStart = new Date(2024, 0, 27);
+
+		// Calculate the number of days between the start of the week and the target date
+		const daysDifference = Math.floor(
+			(targetDate.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000)
+		);
+
+		// Calculate the week number
+		const startDateWeekNumber = Math.ceil((daysDifference + 1) / 7);
+
+		// Calculate for the second date
+		const secondTargetDate = new Date(endreversedDateReceived);
+		const secondYearStart = new Date(secondTargetDate.getFullYear(), 0, 1);
+		const secondDaysDifference = Math.floor(
+			(secondTargetDate.getTime() - secondYearStart.getTime()) /
+				(24 * 60 * 60 * 1000)
+		);
+		const secondStartDateWeekNumber =
+			Math.floor(secondDaysDifference / 7) + 1;
+
+		// Click the forward button in the calendar
+		await (await this.forwardButtonInCalender()).click();
+
+		// Get the month and year of the first date
+		const monthYearOfStartDates = await this.getMonthYear(
+			firstDateRetrieved
+		);
+
+		// Function to click the previous button in the calendar until the correct month/year is displayed
+		const clickPrevBtn = async () => {
+			await this.page.waitForTimeout(1000);
+			const currentMonthElement = this.page.locator(
+				"//div[contains(@class,'MuiGrid-root MuiGrid-container MuiGrid-grid-xs-')]/div[3]/div/div"
+			);
+			const currentMonthText = await currentMonthElement.innerText();
+			const [month, year] = currentMonthText.split(' ');
+			const currentMonthAfterSplit = `${month.slice(0, 3)} ${year}`;
+
+			if (!monthYearOfStartDates.includes(currentMonthAfterSplit)) {
+				await (await this.backButtonInCalender()).click();
+				await clickPrevBtn();
+			}
+		};
+
+		// Click the previous button if necessary
+		await clickPrevBtn();
+
+		// Wait for the required time
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		// Click the specific week number element
+		await this.page
+			.locator(`//*[@id='week-${startDateWeekNumber}']`)
+			.click();
+
+		// Return the reversed and retrieved dates
+		return {
+			startreversedDateReceived,
+			endreversedDateReceived,
+			firstDateRetrieved,
+			secondDateRetrieved
+		};
+	}
 
 	// //xpath back button < in calender
-	// backButtonInCalender() {
-	// 	return this.performanceElements.calenderBackBtn();
-	// }
+	async backButtonInCalender() {
+		return this.performanceElements.calenderBackBtn();
+	}
 
 	// // format date in the form like JAN 08,2023 to 01-08-2023
-	// formatDate(dateValue: string | number | Date) {
-	// 	const date = new Date(dateValue);
-	// 	const formattedDate = date
-	// 		.toLocaleDateString('en-GB', {
-	// 			year: 'numeric',
-	// 			month: '2-digit',
-	// 			day: '2-digit'
-	// 		})
-	// 		.replace(/\//g, '-');
-	// 	return cy.wrap(formattedDate);
-	// }
+	async formatDate(dateValue: string | number | Date) {
+		const date = new Date(dateValue);
+		const formattedDate = date
+			.toLocaleDateString('en-GB', {
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit'
+			})
+			.replace(/\//g, '-');
+		return formattedDate;
+	}
+	// split the two different dates from hyphen
+	async splitDate(dateValue: string) {
+		const hyphenIndex = dateValue.indexOf('-');
+		const firstDate = dateValue.slice(0, hyphenIndex);
+		const secondDate = dateValue.slice(hyphenIndex + 1);
+		return { firstDate, secondDate };
+	}
 
-	// // split the two different dates from hyphen
-	// splitDate(dateValue: string | string[]) {
-	// 	const hyphenIndex = dateValue.indexOf('-');
-	// 	const firstDate = dateValue.slice(0, hyphenIndex);
-	// 	const secondDate = dateValue.slice(hyphenIndex + 1);
-	// 	return cy.wrap({ firstDate, secondDate });
-	// }
+	// reverse date like 01-08-2023 to 2023-08-01
+	async reverseDate(dateValue: string) {
+		const parts = dateValue.split('-');
+		const year = parts[2].trim();
+		const month = parts[1].trim();
+		const day = parts[0].trim();
+		const reversedDate = `${year}-${month}-${day}`;
+		return reversedDate;
+	}
 
-	// // reverse date like 01-08-2023 to 2023-08-01
-	// reverseDate(dateValue: string) {
-	// 	const parts = dateValue.split('-');
-	// 	const year = parts[2].trim();
-	// 	const month = parts[1].trim();
-	// 	const day = parts[0].trim();
-	// 	const reversedDate = `${year}-${month}-${day}`;
-	// 	return cy.wrap(reversedDate);
-	// }
-
-	// // get month and year
-	// getMonthYear(dateReceived: string | number | Date) {
-	// 	const date = new Date(dateReceived);
-	// 	const month = date.toLocaleString('default', { month: 'short' });
-	// 	const year = date.getFullYear();
-	// 	const formattedDate = `${month} ${year}`;
-	// 	return cy.wrap(formattedDate);
-	// }
+	// get month and year
+	async getMonthYear(dateReceived: string | number | Date) {
+		const date = new Date(dateReceived);
+		const month = date.toLocaleString('default', { month: 'short' });
+		const year = date.getFullYear();
+		const formattedDate = `${month} ${year}`;
+		return formattedDate;
+	}
 
 	// verification for no of platform selected
 	async selectPlatformsSelected(numbers: any) {
@@ -1075,7 +909,7 @@ class PerformancePage extends CommonClass {
 	}
 
 	// validate no data visible message
-	async validateNoData(minWaitTime: any) {
+	async validateNoData() {
 		await expect(this.page.locator('body')).toContainText(
 			'There is not enough data to draw this chart!'
 		);
@@ -1083,26 +917,20 @@ class PerformancePage extends CommonClass {
 			this.performanceElements.getDataVisibilityCheckBillBoardChart()
 		).not.toBeVisible();
 	}
-	// FIXME:
 	// get the text of metrics from billboard
-	// getChartsTexts() {
-	// 	return this.performanceElements
-	// 		.getDataVisibilityCheckBillBoardChart()
-	// 		.invoke('text')
-	// 		.then((text: any) => {
-	// 			return cy.wrap({ text });
-	// 		});
-	// }
+	async getChartsTexts() {
+		const text = await this.performanceElements
+			.getDataVisibilityCheckBillBoardChart()
+			.innerText();
+
+		return { text };
+	}
 
 	//get upc count
-	// upcCount() {
-	// 	return this.performanceElements
-	// 		.upcCount()
-	// 		.invoke('text')
-	// 		.then((text: any) => {
-	// 			return cy.wrap({ text });
-	// 		});
-	// }
+	async upcCount() {
+		const text = await this.performanceElements.upcCount().innerText();
+		return { text };
+	}
 	// department and category filter
 	async verifyDeptAndCatFilter() {
 		return this.performanceElements.getDeptCategoryFilter();
@@ -1127,24 +955,23 @@ class PerformancePage extends CommonClass {
 	async checkcategoryHirarchyAppearsDissapears() {
 		return this.performanceElements.categoryHirarchyDialogue();
 	}
-	// FIXME:
 	// select date and category
-	// selectDateAndCategory(
-	// 	url: any,
-	// 	lastWeekNumberInList: any,
-	// 	minWaitTime: any
-	// ) {
-	// 	this.dateFilterIcon({ timeout: minWaitTime }).click();
-	// 	//click on last week
-	// 	this.clickWeekNumbersList(lastWeekNumberInList).click();
-	// 	cy.wait(minWaitTime);
-	// 	this.dateFilterApplyBtnClick();
-	// 	this.verifyDeptAndCatFilter({ timeout: minWaitTime }).click();
-	// 	this.checkUncheckADepartment(1).click();
-	// 	cy.wait(minWaitTime);
-	// 	this.checkUncheckADepartment(1).click();
-	// 	cy.contains('button', 'Confirm').click();
-	// }
+	async selectDateAndCategory(
+		url: any,
+		lastWeekNumberInList: any,
+		minWaitTime: any
+	) {
+		await this.dateFilterIcon().click();
+		//click on last week
+		await this.clickWeekNumbersList(lastWeekNumberInList).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await this.dateFilterApplyBtnClick();
+		await (await this.verifyDeptAndCatFilter()).click();
+		await (await this.checkUncheckADepartment(1)).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await (await this.checkUncheckADepartment(1)).click();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+	}
 
 	// // get category selected and verify from dept and category filter that selected category is applied correctly
 	// checkSelectedCategoryIsApplied(categoryNum: number) {
