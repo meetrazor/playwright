@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { sessionPath } from './config';
 
 /**
  * Read environment variables from file.
@@ -13,8 +14,9 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
 	globalSetup: require.resolve('./global-setup'),
-
+	globalTeardown:require.resolve('./global-teardown'),
 	testDir: './tests',
+	grep:[/@Regression/,/@Smoke/],
 	testMatch: '*.spec.ts',
 	/* Run tests in files in parallel */
 	fullyParallel: false,
@@ -26,10 +28,11 @@ export default defineConfig({
 	workers: process?.env.CI ? 1 : undefined,
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
 	reporter: 'html',
+	timeout: 1000 * 60,
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 	use: {
 		bypassCSP: true,
-
+		storageState:sessionPath,
 		/* Base URL to use in actions like `await page.goto('/')`. */
 		// baseURL: 'http://127.0.0.1:3000',
 

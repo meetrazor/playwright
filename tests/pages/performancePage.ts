@@ -633,52 +633,49 @@ class PerformancePage extends CommonClass {
 
 	// FIXME:
 	// get the text from the list of the selected week
-	async checkTextOfWeeksSelected(
-		WeekNumbersFromList: string,
-		minWaitTime: number
-	) {
-		const weekElement =
-			this.performanceElements.weekText(WeekNumbersFromList);
-		const textContent = await weekElement.textContent({
-			timeout: minWaitTime
-		});
-		return textContent;
-	}
+	// checkTextOfWeeksSelected(WeekNumbersFromList: any, minWaitTime: any) {
+	// 	return new Cypress.Promise((resolve: (arg0: any) => void) => {
+	// 		let getText;
+	// 		this.performanceElements
+	// 			.weekText(WeekNumbersFromList, { timeout: minWaitTime })
+	// 			.then((value: { text: () => any }) => {
+	// 				getText = value.text();
+	// 				resolve(getText);
+	// 			});
+	// 	});
+	// }
 
-	// get selected date from list and the date coming in into calender title post selection
-	async verifyDateSelectedWithDateDisplayedOnCalendar(
-		WeekNumbersFromList: string,
-		minWaitTime: number
-	) {
-		// Get the date of calendar title and verify with the selected date range
-		const getSelectedDateFilterDatesElement =
-			this.performanceElements.getTheDatesFromCalenderTitle(
-				WeekNumbersFromList
-			);
-		const getSelectedDateFilterDates =
-			await getSelectedDateFilterDatesElement.textContent({
-				timeout: minWaitTime
-			});
+	// // get selected date from list and the date coming in into calender title post selection
+	// verifyDateSelectedWithDateDisplayesOnCalender(
+	// 	WeekNumbersFromList: any,
+	// 	minWaitTime: any
+	// ) {
+	// 	// get the date of calender title and verify with the selected date range
+	// 	let getSelectedDateFilterDates: any;
+	// 	return this.performanceElements
+	// 		.getTheDatesFromCalenderTitle(WeekNumbersFromList, {
+	// 			timeout: minWaitTime
+	// 		})
+	// 		.then((value: { text: () => any }) => {
+	// 			getSelectedDateFilterDates = value.text();
+	// 			this.performanceElements
+	// 				.getTheSelectedDate()
+	// 				.then((val: { text: () => any }) => {
+	// 					const getCalenderTitleDateText = val.text();
+	// 					return cy.wrap({
+	// 						getSelectedDateFilterDates,
+	// 						getCalenderTitleDateText
+	// 					});
+	// 				});
+	// 		});
+	// }
 
-		const getCalenderTitleDateTextElement =
-			this.performanceElements.getTheSelectedDate();
-		const getCalenderTitleDateText =
-			await getCalenderTitleDateTextElement.textContent({
-				timeout: minWaitTime
-			});
+	// // current month visible in date filter calender
+	// currentMonthInCalender(currentMonth: any) {
+	// 	return this.performanceElements.currentMonthDateFilter(currentMonth);
+	// }
 
-		return {
-			getSelectedDateFilterDates,
-			getCalenderTitleDateText
-		};
-	}
-
-	// current month visible in date filter calender
-	currentMonthInCalender(currentMonth: any) {
-		return this.performanceElements.currentMonthDateFilter(currentMonth);
-	}
-
-	// choose start and end date using custom date filter..here we are selecting Week to date using custom
+	// // choose start and end date using custom date filter..here we are selecting Week to date using custom
 	// clickStartAndEndDate(
 	// 	weekToDateInList: any,
 	// 	customFromDateFilter: any,

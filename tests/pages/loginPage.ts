@@ -22,10 +22,11 @@ class LoginPage {
 		await this.passwordInput.fill(credentials.password);
 		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		await this.loginButton.first().click({ force: true });
+	
 	}
 
 	async verifyLogin() {
-		expect(this.page.url()).toBe(getURL());
+		await this.page.waitForURL('**/companyList')
 	}
 }
 

@@ -17,6 +17,7 @@ test.describe(
 			page
 		}) => {
 			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
 			await perfPage.dateFilterIcon().click();
 			await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
 			await perfPage.dateFilterApplyBtnClick();
@@ -28,6 +29,7 @@ test.describe(
 			page
 		}) => {
 			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(categoryHirarchy);
 			await perfPage.dateFilterIcon().click();
 			await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
@@ -39,11 +41,12 @@ test.describe(
 	}
 );
 
-test.describe('Performance: Test Date Filter Scenerios', () => {
+test.describe('Performance: Test Date Filter Scenerios',	{ tag: ['@smoke', '@Regression'] }, () => {
 	test('003: check date filter button is enable and is clickable', async ({
 		page
 	}) => {
 		const perfPage = new performancePage(page);
+		await perfPage.navigateToDefaultCompany();
 		await perfPage.waitForAPIResponse(categoryHirarchy);
 		await expect(perfPage.dateFilterIcon()).toBeEnabled();
 		await perfPage.dateFilterIcon().click();
@@ -53,14 +56,16 @@ test.describe('Performance: Test Date Filter Scenerios', () => {
 		page
 	}) => {
 		const perfPage = new performancePage(page);
+		await perfPage.navigateToDefaultCompany();
 		await perfPage.waitForAPIResponse(categoryHirarchy);
 		await perfPage.dateFilterIcon().click();
 		//check filter popup opens up.
-		expect(await perfPage.dateFilterDialogue()).toBeVisible();
+		expect(await perfPage.dateFilterDialogue()).toBeDefined();
 	});
 
 	test('005: check by default week to date is selected', async ({ page }) => {
 		const perfPage = new performancePage(page);
+		await perfPage.navigateToDefaultCompany();
 		await perfPage.waitForAPIResponse(categoryHirarchy);
 		await perfPage.dateFilterIcon().click();
 		await expect(

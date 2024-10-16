@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"main": "index.js",
 	"scripts": {
-		"e2e:smoke:ui": "npx playwright test --ui",
+		"e2e:smoke:ui": "npx playwright test --config=playwright.config.ts",
 		"e2e:smoke:cli": "npx playwright test --config=playwright.cli.config.ts",
 		"generate-test": "npx playwright codegen"
 	},
