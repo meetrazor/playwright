@@ -1,6 +1,10 @@
 import test, { expect } from '@playwright/test';
 import performancePage from './pages/performancePage';
 import {
+	billboardMetrics2,
+	billboardMetrics7,
+	categoryNum1,
+	categoryNum2,
 	customFromDateFilter,
 	dashboardData,
 	heading,
@@ -18,8 +22,8 @@ import {
 	weekToDateInList,
 	weekToDateText
 } from '../shared/const';
-import { getURL } from '../config';
-import { categoryHirarchy } from '../shared/apiEndpoints';
+import { DEFAULT_TIMEOUT, getURL } from '../config';
+import { billboard, categoryHirarchy } from '../shared/apiEndpoints';
 
 test.describe(
 	'Performance Page: verify performance page visibility when logged in and other components visibility',
@@ -390,6 +394,186 @@ test.describe(
 				await perfPage.selectPlatformsSelected('Walmart.com')
 			).toBeVisible();
 			await perfPage.validateNoData();
+		});
+	}
+);
+
+test.describe(
+	'Performance: Test Department and category filter Scenerios',
+	{ tag: ['@smoke', '@Regression'] },
+	() => {
+		test('019: Test department and category filter open up and user can see popuptext, when clicked on department and category filter button', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await expect(await perfPage.verifyDeptAndCatFilter()).toBeVisible();
+
+			await (await perfPage.verifyDeptAndCatFilter()).click();
+			await expect(
+				await perfPage.verifyDeptCatPopUpDialog()
+			).toBeVisible();
+		});
+
+		test('020: check first category is checked by default', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await (await perfPage.verifyDeptAndCatFilter()).click();
+			await expect(
+				await perfPage.checkFirstCategorySelected()
+			).toBeVisible();
+		});
+
+		test('021: check cancel and confirm button is present in category and departments dialogue and user can click on them to perform actions', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await (await perfPage.verifyDeptAndCatFilter()).click();
+			await page.locator('button', { hasText: 'Cancel' }).click();
+			await (await perfPage.verifyDeptAndCatFilter()).click();
+			await page.locator('button', { hasText: 'Confirm' }).click();
+		});
+
+		test('022: check user can select departments and when department is selected then only category hirarchy appears', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await (await perfPage.verifyDeptAndCatFilter()).click();
+			await page.waitForTimeout(DEFAULT_TIMEOUT);
+			await (await perfPage.checkUncheckADepartment(1)).click();
+			//verify unchecked the department and category hirarchy disappers
+			expect(
+				await perfPage.checkcategoryHirarchyAppearsDissapears()
+			).toBeUndefined();
+			//check department filter again
+			//check department filter again
+			await (await perfPage.checkUncheckADepartment(1)).click();
+			//check hirarchy category selectors
+			await expect(
+				await perfPage.checkcategoryHirarchyAppearsDissapears()
+			).toBeVisible();
+		});
+
+		test('023: check user can click on collapse and expand button from department side and collapse will collapse the category and expand will expand the category', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await (await perfPage.verifyDeptAndCatFilter()).click();
+			await (await perfPage.expandCollapseBtnDepartment()).click();
+			await (await perfPage.expandCollapseBtnDepartment()).click();
+			await expect(await perfPage.categoryHirarchyBox()).toBeVisible();
+		});
+
+		test('024: check after selecting any category and if user dont want to perform any operation then user can click on cancel and the category will be not applied', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await (await perfPage.verifyDeptAndCatFilter()).click();
+			await perfPage.checkSelectedCategoryIsNotApplied(
+				categoryNum2.toString()
+			);
+		});
+
+		test('025: check user can select a category from category selector and that selected category is applied in filter', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await perfPage.selectDateAndCategory(lastWeekNumberInList);
+			//get text of category selected and verify that category is selected
+			await perfPage.checkSelectedCategoryIsApplied(
+				categoryNum1.toString()
+			);
+		});
+	}
+);
+
+test.describe(
+	'Performance: Test Billboard is visible correctly',
+	{ tag: ['@smoke', '@Regression'] },
+	() => {
+		test('026: check billboard is visible', async ({ page }) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await perfPage.selectDateAndCategory(lastWeekNumberInList);
+			await page.waitForTimeout(DEFAULT_TIMEOUT);
+			await expect(await perfPage.clickBillBoardMenus(1)).toBeVisible();
+		});
+	}
+);
+
+test.describe(
+	'Performance: Test Billboard components and data with api to match',
+	{ tag: ['@Regression'] },
+	() => {
+		test('027: check menu items from billboard list consist of "Session PDP View rate", "Session ATC rate", "Session Purchase Conversion","PDP View Count", "Add to Cart Count", "Purchase Count", "PDP View Session Share", "ATC Session Share", "Purchase Session Share"', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await perfPage.selectDateAndCategory(lastWeekNumberInList);
+			await page.waitForTimeout(DEFAULT_TIMEOUT);
+			//click on billboard menu button
+			await (await perfPage.clickBillBoardMenus(1)).click();
+			await page.waitForTimeout(DEFAULT_TIMEOUT);
+			await perfPage.checkMenuButtonLabels();
+		});
+
+		test('028: verify when any metrics is selected from billboard which is already selected in any filter then their values will be swapped', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await perfPage.selectDateAndCategory(lastWeekNumberInList);
+			await page.waitForTimeout(DEFAULT_TIMEOUT);
+			//click on billboard menu button
+			await (await perfPage.clickBillBoardMenus(1)).click();
+			await (
+				await perfPage.clickBillBoardMenu(billboardMetrics7)
+			).click();
+			const metricsValue = await perfPage.getBillboardMetrics();
+			await (await perfPage.clickBillBoardMenus(1)).click();
+			await (
+				await perfPage.clickBillBoardMenu(billboardMetrics2)
+			).click();
+
+			await (await perfPage.clickBillBoardMenus(2)).click();
+			const metricsValueSecond =
+				await perfPage.getSecondBillboardMetrics();
+			await page.waitForTimeout(DEFAULT_TIMEOUT);
+			expect(metricsValue.text).toContain(metricsValueSecond.text);
+		});
+
+		test('029: verify billboard data is coming correctly from api', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.waitForAPIResponse(categoryHirarchy);
+			await perfPage.waitForAPIResponse(billboard);
+			// perfPage.billboardWithAPI(
+			// 	url,
+			// 	lastWeekNumberInList,
+			// 	minWaitTime,
+			// 	billboardMetrics1,
+			// 	1
+			// );
 		});
 	}
 );

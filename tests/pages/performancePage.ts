@@ -956,11 +956,7 @@ class PerformancePage extends CommonClass {
 		return this.performanceElements.categoryHirarchyDialogue();
 	}
 	// select date and category
-	async selectDateAndCategory(
-		url: any,
-		lastWeekNumberInList: any,
-		minWaitTime: any
-	) {
+	async selectDateAndCategory(lastWeekNumberInList: string) {
 		await this.dateFilterIcon().click();
 		//click on last week
 		await this.clickWeekNumbersList(lastWeekNumberInList).click();
@@ -973,65 +969,54 @@ class PerformancePage extends CommonClass {
 		await this.page.locator('button', { hasText: 'Confirm' }).click();
 	}
 
-	// // get category selected and verify from dept and category filter that selected category is applied correctly
-	// checkSelectedCategoryIsApplied(categoryNum: number) {
-	// 	this.verifyDeptAndCatFilter({ timeout: 3000 }).click();
-	// 	return this.performanceElements
-	// 		.categorySelectedFromFilter(categoryNum)
-	// 		.invoke('text')
-	// 		.then(
-	// 			(text: {
-	// 				split: (arg0: string) => any[];
-	// 				match: (arg0: RegExp) => any[];
-	// 			}) => {
-	// 				// click on confirm button
-	// 				cy.contains('button', 'Confirm').click();
-	// 				let convertedText = text
-	// 					.split(' ')
-	// 					.slice(1)
-	// 					.join(' ')
-	// 					.toUpperCase();
-	// 				convertedText = convertedText
-	// 					.toLowerCase()
-	// 					.split(' ')
-	// 					.map(
-	// 						(word: string) =>
-	// 							word.charAt(0).toUpperCase() + word.slice(1)
-	// 					)
-	// 					.join(' ');
-	// 				this.performanceElements
-	// 					.categoryAppliedInCategoryFilter()
-	// 					.scrollIntoView()
-	// 					.should('be.visible');
-	// 				this.performanceElements
-	// 					.categoryAppliedInCategoryFilter()
-	// 					.should('contain', convertedText);
-	// 				text = text.match(/\d+/)[0];
-	// 				return cy.wrap({ text, convertedText });
-	// 			}
-	// 		);
-	// }
+	// get category selected and verify from dept and category filter that selected category is applied correctly
+	async checkSelectedCategoryIsApplied(categoryNum: string) {
+		await (await this.verifyDeptAndCatFilter()).click();
+		const text = await this.performanceElements
+			.categorySelectedFromFilter(categoryNum)
+			.innerText();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+		let convertedText = text.split(' ').slice(1).join(' ').toUpperCase();
+		convertedText = convertedText
+			.toLowerCase()
+			.split(' ')
+			.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+			.join(' ');
+
+		await this.performanceElements
+			.categoryAppliedInCategoryFilter()
+			.scrollIntoViewIfNeeded();
+		await expect(
+			this.performanceElements.categoryAppliedInCategoryFilter()
+		).toBeVisible();
+
+		// Verify that the applied category contains the converted text
+		await expect(
+			this.performanceElements.categoryAppliedInCategoryFilter()
+		).toContainText(convertedText);
+
+		// Extract the number from the original text
+		let numberText = text.match(/\d+/)?.[0];
+
+		return { text: numberText, convertedText };
+	}
 
 	// check selected category is not applied when user selected a category and clicked on cancel button
-	// checkSelectedCategoryIsNotApplied(categoryNum: any) {
-	// 	this.performanceElements
-	// 		.categorySelectedFromFilter(categoryNum)
-	// 		.click();
-	// 	this.performanceElements
-	// 		.categorySelectedFromFilter(categoryNum)
-	// 		.invoke('text')
-	// 		.then((text: string) => {
-	// 			cy.contains('button', 'Cancel').click();
-	// 			let convertedText = text
-	// 				.split(' ')
-	// 				.slice(1)
-	// 				.join(' ')
-	// 				.toUpperCase();
-	// 			this.performanceElements
-	// 				.categoryAppliedInCategoryFilter()
-	// 				.should('not.contain', convertedText);
-	// 		});
-	// }
+	async checkSelectedCategoryIsNotApplied(categoryNum: string) {
+		await this.performanceElements
+			.categorySelectedFromFilter(categoryNum)
+			.click();
+		const text = await this.performanceElements
+			.categorySelectedFromFilter(categoryNum)
+			.innerText();
+
+		await this.page.locator('button', { hasText: 'Cancel' }).click();
+		const convertedText = text.split(' ').slice(1).join(' ').toUpperCase();
+
+		await expect(
+			this.performanceElements.categoryAppliedInCategoryFilter()
+		).not.toContainText(convertedText);
+	}
 
 	// expand collapse button
 	async expandCollapseBtnDepartment() {
@@ -1042,31 +1027,30 @@ class PerformancePage extends CommonClass {
 	async clickBillBoardMenus(menuPosition: any) {
 		return this.performanceElements.billboardMenu(menuPosition);
 	}
-	// FIXME:
 	// check the menu items of billboard List
-	// checkMenuButtonLabels() {
-	// 	const expectedLabels = [
-	// 		'Product Detail Page Views (PDP)',
-	// 		'Add to Cart Count',
-	// 		'Purchase Count',
-	// 		'Session Purchase Rate (%)',
-	// 		'Session PDP View Rate (%)',
-	// 		'Session Add to Cart Rate (%)',
-	// 		'PDP View Session Share',
-	// 		'Add to Cart Session Share',
-	// 		'Purchase Session Share'
-	// 	];
-	// 	this.performanceElements
-	// 		.billboardMenuOption()
-	// 		.each(($button: any, index: string | number) => {
-	// 			cy.wrap($button)
-	// 				.invoke('text')
-	// 				.then((buttonText: string) => {
-	// 					const expectedLabel = expectedLabels[index];
-	// 					expect(buttonText.trim()).to.equal(expectedLabel);
-	// 				});
-	// 		});
-	// }
+	async checkMenuButtonLabels() {
+		const expectedLabels = [
+			'Product Detail Page Views (PDP)',
+			'Add to Cart Count',
+			'Purchase Count',
+			'Session Purchase Rate (%)',
+			'Session PDP View Rate (%)',
+			'Session Add to Cart Rate (%)',
+			'PDP View Session Share',
+			'Add to Cart Session Share',
+			'Purchase Session Share'
+		];
+		const buttons = await this.performanceElements
+			.billboardMenuOption()
+			.all();
+
+		for (let index = 0; index < buttons.length; index++) {
+			const buttonText = await buttons[index].innerText();
+			const expectedLabel = expectedLabels[index];
+			// Compare the button text with the expected label
+			expect(buttonText.trim()).toBe(expectedLabel);
+		}
+	}
 
 	// click hod metrics filter
 	async clickDOWHODFilterMenus() {
@@ -1132,36 +1116,29 @@ class PerformancePage extends CommonClass {
 	async clickBillBoardMenu(metrics: any) {
 		return this.performanceElements.selectBillboardMetrics(metrics);
 	}
-	// FIXME:
 	// get metrics value from billboard
-	// getBillboardMetrics() {
-	// 	return this.performanceElements
-	// 		.getMetricsValueBillboard()
-	// 		.invoke('text')
-	// 		.then((text: any) => {
-	// 			return cy.wrap({ text });
-	// 		});
-	// }
+	async getBillboardMetrics() {
+		const text = await this.performanceElements
+			.getMetricsValueBillboard()
+			.innerText();
+		return { text };
+	}
 
 	// // get second metrics value from billboard
-	// getSecondBillboardMetrics() {
-	// 	return this.performanceElements
-	// 		.getSecondMetricsValueBillboard()
-	// 		.invoke('text')
-	// 		.then((text: any) => {
-	// 			return cy.wrap({ text });
-	// 		});
-	// }
+	async getSecondBillboardMetrics() {
+		const text = await this.performanceElements
+			.getSecondMetricsValueBillboard()
+			.innerText();
+		return { text };
+	}
 
 	// values check from conversion
-	// getMetricsValueForConversionFromchart(pos: any) {
-	// 	return this.performanceElements
-	// 		.getAnyMetricsValueForConversionFromchart(pos)
-	// 		.invoke('text')
-	// 		.then((text: any) => {
-	// 			return cy.wrap({ text });
-	// 		});
-	// }
+	getMetricsValueForConversionFromchart(pos: any) {
+		const text = this.performanceElements
+			.getAnyMetricsValueForConversionFromchart(pos)
+			.innerText();
+		return { text };
+	}
 
 	//get selected date from date filter
 	// datesFromFilter(weekToDateInList: string, minWaitTime: any) {
