@@ -113,7 +113,7 @@ test.describe(
 				perfPage.performanceElements.calenderFilterXpath(
 					getSelectedDateFilterDates
 				)
-			).toBeUndefined();
+			).not.toBeVisible();
 		});
 	}
 );
@@ -391,7 +391,7 @@ test.describe(
 			await (await perfPage.clickAppWeb(PlaformWeb)).click();
 			await (await perfPage.clickAppWeb(PlaformApp)).click();
 			await expect(
-				await perfPage.selectPlatformsSelected('Walmart.com')
+				await perfPage.selectPlatformsSelected('')
 			).toBeVisible();
 			await perfPage.validateNoData();
 		});

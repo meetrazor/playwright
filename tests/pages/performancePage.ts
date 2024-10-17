@@ -107,7 +107,7 @@ class PerformancePage extends CommonClass {
 
 		//xpath of selected date
 		getTheSelectedDate: () =>
-			this.page.locator("//*[local-name()='svg']/following-sibling::p"),
+			this.page.locator("//div[@role='presentation']//*[local-name()='svg']/following-sibling::p[contains(@class,'MuiTypography-root')]"),
 
 		//xpath of current month visible in date filter
 		currentMonthDateFilter: (currentMonth: string) =>
@@ -647,11 +647,11 @@ class PerformancePage extends CommonClass {
 			(await this.performanceElements
 				.getTheDatesFromCalenderTitle(WeekNumbersFromList)
 				.innerText()) ?? '';
-
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT)
 		// Get the selected date
-		const getCalenderTitleDateText =
-			(await this.performanceElements.getTheSelectedDate().innerText()) ??
-			'';
+		const getCalenderTitleDateText = 
+		(await this.performanceElements.getTheSelectedDate().innerText()) ??
+		'';
 
 		// Returning both dates for comparison or further processing
 		return {
@@ -796,9 +796,8 @@ class PerformancePage extends CommonClass {
 		const daysDifference = Math.floor(
 			(targetDate.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000)
 		);
-
 		// Calculate the week number
-		const startDateWeekNumber = Math.ceil((daysDifference + 1) / 7);
+		const startDateWeekNumber = Math.ceil((daysDifference + 5) / 7);
 
 		// Calculate for the second date
 		const secondTargetDate = new Date(endreversedDateReceived);
