@@ -452,7 +452,7 @@ test.describe(
 			//verify unchecked the department and category hirarchy disappers
 			expect(
 				await perfPage.checkcategoryHirarchyAppearsDissapears()
-			).toBeUndefined();
+			).not.toBeVisible();
 			//check department filter again
 			//check department filter again
 			await (await perfPage.checkUncheckADepartment(1)).click();

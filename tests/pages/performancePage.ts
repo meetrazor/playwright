@@ -201,10 +201,9 @@ class PerformancePage extends CommonClass {
 		// xpath to click on billboard menu
 		billboardMenu: (menuPos: string) =>
 			this.page.locator(
-				'//div[@class="uS8I9PrbyA_xw5sC54Po"]/div[' +
-					menuPos +
-					']//div[@class="w_HK w_Bm"][1]'
+				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div["+menuPos+"]"
 			),
+			//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div[1]
 
 		// xpath of billboard menu dialog
 		billboardMenuOption: () =>
