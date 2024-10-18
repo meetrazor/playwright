@@ -1,6 +1,7 @@
 import test, { expect } from '@playwright/test';
 import performancePage from './pages/performancePage';
 import {
+	billboardMetrics1,
 	billboardMetrics2,
 	billboardMetrics7,
 	categoryNum1,

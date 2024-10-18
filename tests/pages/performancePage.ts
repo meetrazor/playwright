@@ -1139,103 +1139,39 @@ class PerformancePage extends CommonClass {
 	}
 
 	//get selected date from date filter
-	// datesFromFilter(weekToDateInList: string, minWaitTime: any) {
-	// 	let endreversedDateReceived;
-	// 	let startreversedDateReceived: string | number | Date;
-	// 	let getText;
-	// 	this.dateFilterIcon({ timeout: minWaitTime }).click();
-	// 	return cy
-	// 		.xpath(
-	// 			"//li[@class='MuiListItem-root'][" +
-	// 				weekToDateInList +
-	// 				"]//div[@class='MuiListItemText-root MuiListItemText-multiline']/p",
-	// 			{ timeout: minWaitTime }
-	// 		)
-	// 		.then((value: { text: () => any }) => {
-	// 			getText = value.text();
-	// 			this.splitDate(getText).then(
-	// 				(dates: { firstDate: any; secondDate: any }) => {
-	// 					const firstDateRetrieved = dates.firstDate;
-	// 					const secondDateRetrieved = dates.secondDate;
-	// 					this.formatDate(firstDateRetrieved).then(
-	// 						(datenumeric: any) => {
-	// 							this.reverseDate(datenumeric).then(
-	// 								(reversedDate: any) => {
-	// 									startreversedDateReceived =
-	// 										reversedDate;
-	// 									this.formatDate(
-	// 										secondDateRetrieved
-	// 									).then((datenumeric: any) => {
-	// 										this.reverseDate(datenumeric).then(
-	// 											(reversedDate: any) => {
-	// 												endreversedDateReceived =
-	// 													reversedDate;
-	// 												const targetDate = new Date(
-	// 													startreversedDateReceived
-	// 												);
-	// 												const yearStart = new Date(
-	// 													targetDate.getFullYear(),
-	// 													0,
-	// 													1
-	// 												);
-	// 												yearStart.setDate(
-	// 													yearStart.getDate() -
-	// 														yearStart.getDay()
-	// 												);
-	// 												const daysDifference =
-	// 													Math.floor(
-	// 														(targetDate -
-	// 															yearStart) /
-	// 															(24 *
-	// 																60 *
-	// 																60 *
-	// 																1000)
-	// 													);
-	// 												const startDateWeekNumber =
-	// 													Math.ceil(
-	// 														(daysDifference +
-	// 															1) /
-	// 															7
-	// 													);
-	// 												const secondTargetDate =
-	// 													new Date(
-	// 														endreversedDateReceived
-	// 													);
-	// 												const secondYearStart =
-	// 													new Date(
-	// 														secondTargetDate.getFullYear(),
-	// 														0,
-	// 														1
-	// 													);
-	// 												const secondDaysDifference =
-	// 													Math.floor(
-	// 														(secondTargetDate -
-	// 															secondYearStart) /
-	// 															(24 *
-	// 																60 *
-	// 																60 *
-	// 																1000)
-	// 													);
-	// 												const secondStartDateWeekNumber =
-	// 													Math.floor(
-	// 														secondDaysDifference /
-	// 															7
-	// 													) + 1;
-	// 												cy.wrap({
-	// 													startreversedDateReceived,
-	// 													endreversedDateReceived
-	// 												});
-	// 											}
-	// 										);
-	// 									});
-	// 								}
-	// 							);
-	// 						}
-	// 					);
-	// 				}
-	// 			);
-	// 		});
-	// }
+	async datesFromFilter(weekToDateInList: string) {
+		let endreversedDateReceived;
+		let startreversedDateReceived;
+
+		// Click on the date filter icon
+		await this.dateFilterIcon().click();
+
+		// Get the date text from the specified week in the list
+		const getText = await this.page
+			.locator(
+				`//li[@class='MuiListItem-root'][${weekToDateInList}]//div[@class='MuiListItemText-root MuiListItemText-multiline']/p`
+			)
+			.innerText();
+
+		// Split the date
+		const dates = await this.splitDate(getText);
+		const firstDateRetrieved = dates.firstDate;
+		const secondDateRetrieved = dates.secondDate;
+
+		// Format and reverse the first date
+		const startDateNumeric = await this.formatDate(firstDateRetrieved);
+		startreversedDateReceived = await this.reverseDate(startDateNumeric);
+
+		// Format and reverse the second date
+		const endDateNumeric = await this.formatDate(secondDateRetrieved);
+		endreversedDateReceived = await this.reverseDate(endDateNumeric);
+
+		// Return the reversed dates
+		return {
+			startreversedDateReceived,
+			endreversedDateReceived
+		};
+	}
 
 	// verify session conversion tooltip
 	// verifySessionConvChartMetricsForCategory(
@@ -1512,25 +1448,16 @@ class PerformancePage extends CommonClass {
 	async clickWeekFilter(weekList: any) {
 		return this.performanceElements.weekFilter(weekList).click();
 	}
-	// FIXME:
 	// get department number
-	// getDepartmentNumber() {
-	// 	return this.performanceElements
-	// 		.getDepartment(1)
-	// 		.invoke('text')
-	// 		.then((text: string) => {
-	// 			const numberExtracted = parseInt(text);
-	// 			return cy.wrap({ numberExtracted });
-	// 		});
-	// }
+	async getDepartmentNumber() {
+		const text = await this.performanceElements
+			.getDepartment('1')
+			.innerText();
+		const numberExtracted = parseInt(text);
+		return { numberExtracted };
+	}
 
-	//check metrics swapping
-	// getMetricsFromBillboard() {
-	// 	this.getBillboardMetrics().then((metricsValue: { text: any }) => {
-	// 		expect(metricsValue.text).to.contain(metricsReceivedFromApi.value);
-	// 	});
-	// }
-
+	// FIXME:
 	//billboard data check with api
 	// billboardWithAPI(
 	// 	url: string,
@@ -1729,6 +1656,92 @@ class PerformancePage extends CommonClass {
 	// 		}
 	// 	);
 	// }
+	async billboardWithAPI(
+		lastWeekNumberInList: string,
+		metricsToCheck: string,
+		menuPosition: number
+	) {
+		// Get the start and end dates
+		const dates = await this.datesFromFilter(lastWeekNumberInList);
+		let dateStart = dates.startreversedDateReceived;
+		let dateEnd = dates.endreversedDateReceived;
+
+		console.log(dateStart);
+
+		// Apply week filter and department/category selection
+		await this.clickWeekFilter(lastWeekNumberInList);
+		await this.dateFilterApplyBtnClick();
+		await (await this.verifyDeptAndCatFilter()).click();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+
+		// Check selected category and proceed
+		const category = await this.checkSelectedCategoryIsApplied('1');
+		await (await this.verifyDeptAndCatFilter()).click();
+
+		// Get department number
+		const departNum = await this.getDepartmentNumber();
+		await this.page.click('button:has-text("Confirm")');
+
+		// Get company ID
+		const companyId = await this.page.locatorCompanyId(url);
+		let compnyId = companyId;
+		let categoryNbr = category.text;
+		let dNum = departNum.numberExtracted;
+
+		// Click on the required billboard menu
+		await (await this.clickBillBoardMenus(menuPosition)).click();
+		await (await this.clickBillBoardMenu(metricsToCheck)).click();
+
+		// Set up API intercept for the billboard request based on URL
+		let apiUrl;
+		if (url === 'https://stg.walmartluminate.com/digitallandscapes/') {
+			apiUrl = billboardStg;
+		} else if (
+			url === 'https://www.walmartluminate.com/digitallandscapes/'
+		) {
+			apiUrl = billboardProd;
+		} else {
+			apiUrl = billboard;
+		}
+
+		// Get LUMINATE_TOKEN cookie
+		const cookie = await this.page.context().cookies();
+		const luminationToken =
+			cookie.find((c) => c.name === 'LUMINATE_TOKEN')?.value || null;
+
+		// Prepare API headers and payload
+		const header = new ApiHeaders().getHeadersAndCookies(
+			url,
+			luminationToken
+		);
+		categoryNbr = categoryNbr.split(' ')[0];
+		const billboardPayload = new ApiPayloads().getPayloadBillboardTerm(
+			dateStart,
+			dateEnd,
+			dNum + '_' + categoryNbr,
+			compnyId
+		);
+
+		// Send the POST request and verify metrics
+		const response = await this.page.request.post(apiUrl, {
+			headers: header,
+			data: billboardPayload
+		});
+
+		const responseBody = await response.json();
+		const metricsReceivedFromApi = responseBody.find(
+			(item) => item.title === metricsToCheck
+		);
+
+		// Get the metrics displayed on the page
+		const metricsValue = await this.getBillboardMetrics();
+
+		// Wait for the specified minimum wait time before checking
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		// Assert that the metrics match
+		expect(metricsValue.text).toContain(metricsReceivedFromApi.value);
+	}
 
 	// for upcs verify billboard data
 	// checkBillBoardDataUpc(
