@@ -558,7 +558,7 @@ test.describe(
 			//click on billboard menu button
 			await (await perfPage.clickBillBoardMenus(1)).click();
 			await (
-				await perfPage.clickBillBoardMenu(billboardMetrics7)
+				await perfPage.clickBillBoardMenu(billboardMetrics1)
 			).click();
 			const metricsValue = await perfPage.getBillboardMetrics();
 			await (await perfPage.clickBillBoardMenus(1)).click();
@@ -581,7 +581,7 @@ test.describe(
 			await perfPage.waitForAPIResponse(categoryHirarchy);
 			await perfPage.waitForAPIResponse(billboard);
 			await perfPage.billboardWithAPI(
-				lastWeekNumberInList,
+				last4WeekNumberInList,
 				billboardMetrics1,
 				1
 			);

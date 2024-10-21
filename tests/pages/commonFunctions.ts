@@ -74,7 +74,7 @@ class CommonClass {
 		const headers = {
 			'Content-Type': 'application/json',
 			Connection: 'keep-alive',
-			Cookie: `LUMINATE_TOKEN=${cookieValue}`
+			Cookie: cookieValue
 		};
 
 		return headers;
@@ -92,7 +92,8 @@ class CommonClass {
 			companyIDs: [compnyId],
 			categories: [category],
 			brands: [],
-			upcs: []
+			upcs: [],
+			comparisonType: "timePeriod"
 		};
 		return billboardPayloads;
 	}

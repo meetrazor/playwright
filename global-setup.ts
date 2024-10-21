@@ -8,7 +8,6 @@ async function globalSetup() {
 		fs.unlinkSync(sessionPath);
 	}
 	//some code
-	console.log(process.env.ENV);
 	const browser = await chromium.launch();
 	const page = await browser.newPage();
 	const loginPage = new LoginPage(page);

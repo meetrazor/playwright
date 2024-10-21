@@ -204,12 +204,11 @@ class PerformancePage extends CommonClass {
 		// xpath to click on billboard menu
 		billboardMenu: (menuPos: string) =>
 			this.page.locator(
-				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div[" +
+				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div/div[" +
 					menuPos +
-					']'
+					']/div/button'
 			),
 		//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div[1]
-
 		// xpath of billboard menu dialog
 		billboardMenuOption: () =>
 			this.page.locator('div[data-testid="menu"] button'),
@@ -227,13 +226,16 @@ class PerformancePage extends CommonClass {
 		// xpath to get metrics value from billboard
 		getMetricsValueBillboard: () =>
 			this.page.locator(
-				"//div[@class='uS8I9PrbyA_xw5sC54Po']//div[@class='Z5oOKSC8c29pOy82KGV5'][1]//span[@class='w_D6 w_D8 w_EB'][1]"
+				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div/div[1]/div/button"
 			),
-
+		getFullMetricsValueBillboard: (index:string) =>
+			this.page.locator(
+				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div/div["+index+"]/div"
+			),
 		// xpath to get metrics value from billboard for 2nd metrics
 		getSecondMetricsValueBillboard: () =>
 			this.page.locator(
-				"//div[@class='uS8I9PrbyA_xw5sC54Po']//div[@class='Z5oOKSC8c29pOy82KGV5'][2]//span[@class='w_D6 w_D8 w_EB'][1]"
+				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div/div[2]/div/button"
 			),
 
 		// xpath for conversions tooltip
@@ -1678,11 +1680,10 @@ class PerformancePage extends CommonClass {
 
 		// Get LUMINATE_TOKEN cookie
 		const cookie = await this.page.context().cookies();
-		const luminationToken =
-			cookie.find((c) => c.name === 'LUMINATE_TOKEN')?.value ?? '';
-
+		const cookieString = cookie.reduce((acc,curr) =>{
+			return `${acc} ${curr.name}=${curr.value};`},'')
 		// Prepare API headers and payload
-		const header = await this.getHeadersAndCookies(luminationToken);
+		const header = await this.getHeadersAndCookies(cookieString);
 		categoryNbr = categoryNbr?.split(' ')[0];
 		const billboardPayload = this.getPayloadBillboardTerm(
 			dateStart,
@@ -1696,20 +1697,15 @@ class PerformancePage extends CommonClass {
 			headers: header,
 			data: billboardPayload
 		});
-
 		const responseBody = await response.json();
 		const metricsReceivedFromApi = responseBody.find(
 			(item: any) => item.title === metricsToCheck
 		);
 
 		// Get the metrics displayed on the page
-		const metricsValue = await this.getBillboardMetrics();
-
-		// Wait for the specified minimum wait time before checking
-		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 
 		// Assert that the metrics match
-		expect(metricsValue.text).toContain(metricsReceivedFromApi.value);
+		expect( await this.performanceElements.getFullMetricsValueBillboard('1').allInnerTexts()).toContain(metricsReceivedFromApi.title);
 	}
 
 	// for upcs verify billboard data
