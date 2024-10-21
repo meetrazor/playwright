@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import { DEFAULT_TIMEOUT } from '../../config';
 import CommonClass from './commonFunctions';
+import { dow, dowProd, dowStg } from '../../shared/routes';
 
 class PerformancePage extends CommonClass {
 	performanceElements = {
@@ -107,7 +108,9 @@ class PerformancePage extends CommonClass {
 
 		//xpath of selected date
 		getTheSelectedDate: () =>
-			this.page.locator("//div[@role='presentation']//*[local-name()='svg']/following-sibling::p[contains(@class,'MuiTypography-root')]"),
+			this.page.locator(
+				"//div[@role='presentation']//*[local-name()='svg']/following-sibling::p[contains(@class,'MuiTypography-root')]"
+			),
 
 		//xpath of current month visible in date filter
 		currentMonthDateFilter: (currentMonth: string) =>
@@ -201,9 +204,11 @@ class PerformancePage extends CommonClass {
 		// xpath to click on billboard menu
 		billboardMenu: (menuPos: string) =>
 			this.page.locator(
-				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div["+menuPos+"]"
+				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div[" +
+					menuPos +
+					']'
 			),
-			//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div[1]
+		//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div[1]
 
 		// xpath of billboard menu dialog
 		billboardMenuOption: () =>
@@ -646,11 +651,11 @@ class PerformancePage extends CommonClass {
 			(await this.performanceElements
 				.getTheDatesFromCalenderTitle(WeekNumbersFromList)
 				.innerText()) ?? '';
-		await this.page.waitForTimeout(DEFAULT_TIMEOUT)
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		// Get the selected date
-		const getCalenderTitleDateText = 
-		(await this.performanceElements.getTheSelectedDate().innerText()) ??
-		'';
+		const getCalenderTitleDateText =
+			(await this.performanceElements.getTheSelectedDate().innerText()) ??
+			'';
 
 		// Returning both dates for comparison or further processing
 		return {
@@ -1054,21 +1059,20 @@ class PerformancePage extends CommonClass {
 	async clickDOWHODFilterMenus() {
 		return this.performanceElements.dowHodFilter();
 	}
-	// FIXME:
 	// check the menu items of HOD/DOW List
-	// checkMenuButtonLabelsForHODAndDOW() {
-	// 	const expectedLabels = ['PDP views', 'Add to cart', 'Purchase'];
-	// 	this.performanceElements
-	// 		.billboardMenuOption()
-	// 		.each(($button: any, index: string | number) => {
-	// 			cy.wrap($button)
-	// 				.invoke('text')
-	// 				.then((buttonText: string) => {
-	// 					const expectedLabel = expectedLabels[index];
-	// 					expect(buttonText.trim()).to.equal(expectedLabel);
-	// 				});
-	// 		});
-	// }
+	async checkMenuButtonLabelsForHODAndDOW() {
+		const expectedLabels = ['PDP views', 'Add to cart', 'Purchase'];
+		const buttons = await this.performanceElements
+			.billboardMenuOption()
+			.all();
+
+		for (let index = 0; index < buttons.length; index++) {
+			const buttonText = await buttons[index].innerText();
+			const expectedLabel = expectedLabels[index];
+			// Compare the button text with the expected label
+			expect(buttonText.trim()).toBe(expectedLabel);
+		}
+	}
 
 	// category hirarchy side
 	async categoryHirarchyBox() {
@@ -1131,8 +1135,8 @@ class PerformancePage extends CommonClass {
 	}
 
 	// values check from conversion
-	getMetricsValueForConversionFromchart(pos: any) {
-		const text = this.performanceElements
+	async getMetricsValueForConversionFromchart(pos: any) {
+		const text = await this.performanceElements
 			.getAnyMetricsValueForConversionFromchart(pos)
 			.innerText();
 		return { text };
@@ -1174,42 +1178,29 @@ class PerformancePage extends CommonClass {
 	}
 
 	// verify session conversion tooltip
-	// verifySessionConvChartMetricsForCategory(
-	// 	lastWeekNumberInList: any,
-	// 	minWaitTime: any,
-	// 	metricsToCheck: any,
-	// 	metricsPositionInConversionChart: any,
-	// 	menuPosition: any
-	// ) {
-	// 	this.datesFromFilter(lastWeekNumberInList, minWaitTime).then(
-	// 		(dates: {
-	// 			startreversedDateReceived: any;
-	// 			endreversedDateReceived: any;
-	// 		}) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			this.clickWeekNumbersList(lastWeekNumberInList).click();
-	// 			cy.wait(minWaitTime);
-	// 			this.dateFilterApplyBtnClick();
-	// 			this.verifyDeptAndCatFilter({ timeout: minWaitTime }).click();
-	// 			this.checkUncheckADepartment(1).click();
-	// 			this.checkUncheckADepartment(1).click();
-	// 			cy.contains('button', 'Confirm').click();
-	// 			//click on billboard menu button
-	// 			this.clickBillBoardMenus(menuPosition).click();
-	// 			this.clickBillBoardMenu(metricsToCheck).click();
-	// 			this.getBillboardMetrics().then(
-	// 				(metricsValue: { text: any }) => {
-	// 					this.getMetricsValueForConversionFromchart(
-	// 						metricsPositionInConversionChart
-	// 					).then((metrics: { text: any }) => {
-	// 						expect(metricsValue.text).to.contain(metrics.text);
-	// 					});
-	// 				}
-	// 			);
-	// 		}
-	// 	);
-	// }
+	async verifySessionConvChartMetricsForCategory(
+		lastWeekNumberInList: string,
+		metricsToCheck: string,
+		metricsPositionInConversionChart: string,
+		menuPosition: string
+	) {
+		const { startreversedDateReceived, endreversedDateReceived } =
+			await this.datesFromFilter(lastWeekNumberInList);
+		await this.clickWeekNumbersList(lastWeekNumberInList).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await this.dateFilterApplyBtnClick();
+		await (await this.verifyDeptAndCatFilter()).click();
+		await (await this.checkUncheckADepartment(1)).click();
+		await (await this.checkUncheckADepartment(1)).click();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+		await (await this.clickBillBoardMenus(menuPosition)).click();
+		await (await this.clickBillBoardMenu(metricsToCheck)).click();
+		const metricsValue = await this.getBillboardMetrics();
+		const metrics = await this.getMetricsValueForConversionFromchart(
+			metricsPositionInConversionChart
+		);
+		expect(metricsValue.text).toContain(metrics.text);
+	}
 
 	// get billboards any menu data
 	// async getBillboardMenus(metricsValue: any, menuPosition: any) {
@@ -1329,10 +1320,7 @@ class PerformancePage extends CommonClass {
 	}
 
 	// select last week date and ctageory
-	async selectLastWeekDtAndCategory(
-		lastWeekNumberInList: any,
-		minWaitTime: any
-	) {
+	async selectLastWeekDtAndCategory(lastWeekNumberInList: string) {
 		await this.dateFilterIcon().click();
 		await this.clickWeekNumbersList(lastWeekNumberInList).click();
 		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
@@ -1354,26 +1342,21 @@ class PerformancePage extends CommonClass {
 		await expect(this.performanceElements.upcConfirmBtn()).toBeVisible();
 	}
 
-	// FIXME:
 	//paste upcs
-	// pasteUpcs(aUpc: any, minWaitTime: undefined) {
-	// 	this.checkAndClickOnUpcBtn().click();
-	// 	this.performanceElements
-	// 		.upcPaste({ timeout: minWaitTime })
-	// 		.as('searchInput');
-	// 	this.page
-	// 		.locator('@searchInput')
-	// 		.type(aUpc, { parseSpecialCharSequences: false })
-	// 		.type('{enter}');
-	// }
+	async pasteUpcs(aUpc: string) {
+		await (await this.checkAndClickOnUpcBtn()).click();
+
+		const searchInput = this.performanceElements.upcPaste();
+		await searchInput.fill(aUpc); // Fill the input field with the UPC
+		await searchInput.press('Enter'); // Simulate pressing Enter
+	}
+
 	// paste upcs text box
-	// pasteUpcTextArea(Upcs: any) {
-	// 	this.performanceElements.upcPasteArea().as('searchInput');
-	// 	this.page
-	// 		.locator('@searchInput')
-	// 		.type(Upcs, { parseSpecialCharSequences: false })
-	// 		.type('{enter}');
-	// }
+	async pasteUpcTextArea(Upcs: any) {
+		const search = await this.performanceElements.upcPasteArea();
+		await search.fill(Upcs);
+		await search.press('Enter');
+	}
 
 	// check pasted upc
 	async pastedUpcCheck(aUpc: any) {
@@ -1666,8 +1649,6 @@ class PerformancePage extends CommonClass {
 		let dateStart = dates.startreversedDateReceived;
 		let dateEnd = dates.endreversedDateReceived;
 
-		console.log(dateStart);
-
 		// Apply week filter and department/category selection
 		await this.clickWeekFilter(lastWeekNumberInList);
 		await this.dateFilterApplyBtnClick();
@@ -1683,7 +1664,7 @@ class PerformancePage extends CommonClass {
 		await this.page.click('button:has-text("Confirm")');
 
 		// Get company ID
-		const companyId = await this.page.locatorCompanyId(url);
+		const companyId = await this.getCompanyId();
 		let compnyId = companyId;
 		let categoryNbr = category.text;
 		let dNum = departNum.numberExtracted;
@@ -1693,29 +1674,17 @@ class PerformancePage extends CommonClass {
 		await (await this.clickBillBoardMenu(metricsToCheck)).click();
 
 		// Set up API intercept for the billboard request based on URL
-		let apiUrl;
-		if (url === 'https://stg.walmartluminate.com/digitallandscapes/') {
-			apiUrl = billboardStg;
-		} else if (
-			url === 'https://www.walmartluminate.com/digitallandscapes/'
-		) {
-			apiUrl = billboardProd;
-		} else {
-			apiUrl = billboard;
-		}
+		let apiUrl = await this.getBillboardAPIURL();
 
 		// Get LUMINATE_TOKEN cookie
 		const cookie = await this.page.context().cookies();
 		const luminationToken =
-			cookie.find((c) => c.name === 'LUMINATE_TOKEN')?.value || null;
+			cookie.find((c) => c.name === 'LUMINATE_TOKEN')?.value ?? '';
 
 		// Prepare API headers and payload
-		const header = new ApiHeaders().getHeadersAndCookies(
-			url,
-			luminationToken
-		);
-		categoryNbr = categoryNbr.split(' ')[0];
-		const billboardPayload = new ApiPayloads().getPayloadBillboardTerm(
+		const header = await this.getHeadersAndCookies(luminationToken);
+		categoryNbr = categoryNbr?.split(' ')[0];
+		const billboardPayload = this.getPayloadBillboardTerm(
 			dateStart,
 			dateEnd,
 			dNum + '_' + categoryNbr,
@@ -1730,7 +1699,7 @@ class PerformancePage extends CommonClass {
 
 		const responseBody = await response.json();
 		const metricsReceivedFromApi = responseBody.find(
-			(item) => item.title === metricsToCheck
+			(item: any) => item.title === metricsToCheck
 		);
 
 		// Get the metrics displayed on the page
@@ -1890,791 +1859,240 @@ class PerformancePage extends CommonClass {
 	// 		.should('be.visible');
 	// }
 
-	// // date text like Mar 09, 2024
-	// getDateFeomCalender(lastWeekNumberInList: any, minWaitTime: any) {
-	// 	return this.performanceElements
-	// 		.weekFilter(lastWeekNumberInList)
-	// 		.then((value: { text: () => any }) => {
-	// 			let getText = value.text();
-	// 			//const updatedText = getText.replace(/\b0+(\d+)\b/g, '$1');
-	// 			return cy.wrap({ getText });
-	// 		});
-	// }
+	// date text like Mar 09, 2024
+	async getDateFeomCalender(lastWeekNumberInList: string) {
+		const getText = await this.performanceElements
+			.weekFilter(lastWeekNumberInList)
+			.innerText();
+		return { getText };
+	}
 
 	//tooltip from dow chart
 	async tooltipDOW() {
 		return this.performanceElements.dowTooltip();
 	}
-	// FIXME:
-	// //date to get from start and end date for hod from filters of hod
-	// getStartAndEndDateIntervalHOD(strtdate: Date, enddate: Date) {
-	// 	let year = strtdate.getFullYear();
-	// 	let month = String(strtdate.getMonth() + 1).padStart(2, '0');
-	// 	let day = String(strtdate.getDate()).padStart(2, '0');
-	// 	let endDtyear = enddate.getFullYear();
-	// 	let endDtmonth = String(enddate.getMonth() + 1).padStart(2, '0');
-	// 	let endDtday = String(enddate.getDate()).padStart(2, '0');
-	// 	let startDt = `${year}-${month}-${day}`;
-	// 	let endDt = `${endDtyear}-${endDtmonth}-${endDtday}`;
-	// 	return cy.wrap({ startDt, endDt });
-	// }
+	//date to get from start and end date for hod from filters of hod
+	async getStartAndEndDateIntervalHOD(strtdate: Date, enddate: Date) {
+		let year = strtdate.getFullYear();
+		let month = String(strtdate.getMonth() + 1).padStart(2, '0');
+		let day = String(strtdate.getDate()).padStart(2, '0');
+		let endDtyear = enddate.getFullYear();
+		let endDtmonth = String(enddate.getMonth() + 1).padStart(2, '0');
+		let endDtday = String(enddate.getDate()).padStart(2, '0');
+		let startDt = `${year}-${month}-${day}`;
+		let endDt = `${endDtyear}-${endDtmonth}-${endDtday}`;
+		return { startDt, endDt };
+	}
 	//DOW tooltips to check with api
-	// checkTooltipsWithApiDOW(
-	// 	url: string,
-	// 	lastWeekNumberInList: any,
-	// 	minWaitTime: any,
-	// 	hodOrDow: string | string[]
-	// ) {
-	// 	let interval;
-	// 	let tooltipDay: any;
-	// 	return this.datesFromFilter(lastWeekNumberInList, minWaitTime).then(
-	// 		(dates: {
-	// 			startreversedDateReceived: any;
-	// 			endreversedDateReceived: any;
-	// 		}) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			this.clickWeekNumbersList(lastWeekNumberInList).click();
-	// 			this.dateFilterApplyBtnClick();
-	// 			this.verifyDeptAndCatFilter({ timeout: minWaitTime }).click();
-	// 			this.checkUncheckADepartment(1).click();
-	// 			this.checkUncheckADepartment(1).click();
-	// 			cy.contains('button', 'Confirm').click();
-	// 			cy.wait(minWaitTime);
-	// 			//get text of category selected and verify that category is selected i
-	// 			this.checkSelectedCategoryIsApplied(1).then(
-	// 				(category: { text: any }) => {
-	// 					this.verifyDeptAndCatFilter({
-	// 						timeout: minWaitTime
-	// 					}).click();
-	// 					this.getDepartmentNumber().then(
-	// 						(departNum: { numberExtracted: any }) => {
-	// 							cy.contains('button', 'Confirm').click();
-	// 							this.page
-	// 								.locatorCompanyId(url)
-	// 								.then((cmpanyId: any) => {
-	// 									let categoryNbr = category.text;
-	// 									let departNumber =
-	// 										departNum.numberExtracted;
-	// 									let cmpanyIdReceived = cmpanyId;
-	// 									cy.wait(minWaitTime);
-	// 									this.page
-	// 										.locator(
-	// 											"//div[@id='hourly-daily-trend']//div[@role='button']"
-	// 										)
-	// 										.invoke('show');
-	// 									this.page
-	// 										.locator(
-	// 											"//div[@id='hourly-daily-trend']//div[@role='button']"
-	// 										)
-	// 										.click({ force: true });
-	// 									cy.log('Hover action triggered');
-	// 									this.page
-	// 										.locator('#hourly-daily-trend')
-	// 										.trigger('mouseover')
-	// 										.then(() => {
-	// 											this.page
-	// 												.locator(
-	// 													'#hourly-daily-trend .am5-tooltip-container div[role="tooltip"]'
-	// 												)
-	// 												.should('be.visible')
-	// 												.should('not.be.empty')
-	// 												.invoke('text')
-	// 												.then(
-	// 													(
-	// 														tooltipText: string
-	// 													) => {
-	// 														console.log(
-	// 															'Tooltip text:',
-	// 															tooltipText.trim()
-	// 														);
-	// 														this.page
-	// 															.locator(
-	// 																'//div[@id="hourly-daily-trend"]//div[@role="alert"]'
-	// 															)
-	// 															.invoke('show');
-	// 														this.page
-	// 															.locator(
-	// 																'//div[@id="hourly-daily-trend"]//div[@role="alert"]'
-	// 															)
-	// 															.click({
-	// 																force: true
-	// 															});
-	// 														this.page
-	// 															.locator(
-	// 																"//div[@id='hourly-daily-trend']//canvas[@class='am5-layer-30']"
-	// 															)
-	// 															.invoke('show')
-	// 															.click({
-	// 																force: true
-	// 															});
-	// 														this.tooltipDOW()
-	// 															.invoke('text')
-	// 															.then(
-	// 																(
-	// 																	tooltipText: string
-	// 																) => {
-	// 																	cy.wait(
-	// 																		minWaitTime
-	// 																	);
-	// 																	if (
-	// 																		url ==
-	// 																		'https://stg.walmartluminate.com/digitallandscapes/'
-	// 																	) {
-	// 																		cy.intercept(
-	// 																			dowStg
-	// 																		).as(
-	// 																			'dow'
-	// 																		);
-	// 																	} else if (
-	// 																		url ==
-	// 																		'https://www.walmartluminate.com/digitallandscapes/'
-	// 																	) {
-	// 																		cy.intercept(
-	// 																			dowProd
-	// 																		).as(
-	// 																			'dow'
-	// 																		);
-	// 																	} else {
-	// 																		cy.intercept(
-	// 																			dow
-	// 																		).as(
-	// 																			'dow'
-	// 																		);
-	// 																	}
-	// 																	this.page
-	// 																		.locatorCookie(
-	// 																			'LUMINATE_TOKEN'
-	// 																		)
-	// 																		.then(
-	// 																			(cookie: {
-	// 																				value: any;
-	// 																			}) => {
-	// 																				const luminationToken =
-	// 																					cookie
-	// 																						? cookie.value
-	// 																						: null;
-	// 																				let header =
-	// 																					new ApiHeaders().getHeadersAndCookies(
-	// 																						url,
-	// 																						luminationToken
-	// 																					);
-	// 																				categoryNbr =
-	// 																					categoryNbr.split(
-	// 																						' '
-	// 																					)[0];
+	async checkTooltipsWithApiDOW(
+		lastWeekNumberInList: string,
+		hodOrDow: string
+	) {
+		let interval;
+		let tooltipDay;
 
-	// 																				let startDate =
-	// 																					new Date(
-	// 																						dateStart
-	// 																					);
-	// 																				let endDate =
-	// 																					new Date(
-	// 																						dateEnd
-	// 																					);
-	// 																				this.getStartAndEndDateIntervalHOD(
-	// 																					startDate,
-	// 																					endDate
-	// 																				).then(
-	// 																					(datenumeric: {
-	// 																						endDt: string;
-	// 																						startDt: string;
-	// 																					}) => {
-	// 																						if (
-	// 																							hodOrDow.includes(
-	// 																								'hod'
-	// 																							)
-	// 																						) {
-	// 																							interval =
-	// 																								datenumeric.endDt;
-	// 																						} else {
-	// 																							interval =
-	// 																								datenumeric.startDt +
-	// 																								',' +
-	// 																								datenumeric.endDt;
-	// 																						}
-	// 																						let AreaPayload =
-	// 																							new ApiPayloads().getPayloadAreaChart(
-	// 																								dateStart,
-	// 																								dateEnd,
-	// 																								departNumber +
-	// 																									'_' +
-	// 																									categoryNbr,
-	// 																								interval,
-	// 																								cmpanyIdReceived
-	// 																							);
-	// 																						if (
-	// 																							url ==
-	// 																							'https://stg.walmartluminate.com/digitallandscapes/'
-	// 																						) {
-	// 																							cy.request(
-	// 																								{
-	// 																									method: 'POST',
-	// 																									url: dowStg,
-	// 																									headers:
-	// 																										header,
-	// 																									body: AreaPayload
-	// 																								}
-	// 																							).then(
-	// 																								(response: {
-	// 																									body: any[];
-	// 																								}) => {
-	// 																									if (
-	// 																										hodOrDow.includes(
-	// 																											'hod'
-	// 																										)
-	// 																									) {
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												2
-	// 																											);
-	// 																									} else
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												3
-	// 																											);
-	// 																									const pdpCount =
-	// 																										response.body.find(
-	// 																											(item: {
-	// 																												position: any;
-	// 																											}) =>
-	// 																												item.position ===
-	// 																												tooltipDay
-	// 																										);
-	// 																									let ValuePdpCount =
-	// 																										pdpCount.pdpViewCount;
-	// 																									ValuePdpCount =
-	// 																										ValuePdpCount.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.replace(
-	// 																											',',
-	// 																											''
-	// 																										);
-	// 																									return cy.wrap(
-	// 																										{
-	// 																											tooltipText,
-	// 																											ValuePdpCount
-	// 																										}
-	// 																									);
-	// 																								}
-	// 																							);
-	// 																						} else if (
-	// 																							url ==
-	// 																							'https://www.walmartluminate.com/digitallandscapes/'
-	// 																						) {
-	// 																							cy.request(
-	// 																								{
-	// 																									method: 'POST',
-	// 																									url: dowProd,
-	// 																									headers:
-	// 																										header,
-	// 																									body: AreaPayload
-	// 																								}
-	// 																							).then(
-	// 																								(response: {
-	// 																									body: any[];
-	// 																								}) => {
-	// 																									if (
-	// 																										hodOrDow.includes(
-	// 																											'hod'
-	// 																										)
-	// 																									) {
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												2
-	// 																											);
-	// 																									} else
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												3
-	// 																											);
-	// 																									const pdpCount =
-	// 																										response.body.find(
-	// 																											(item: {
-	// 																												position: any;
-	// 																											}) =>
-	// 																												item.position ===
-	// 																												tooltipDay
-	// 																										);
-	// 																									let ValuePdpCount =
-	// 																										pdpCount.pdpViewCount;
-	// 																									ValuePdpCount =
-	// 																										ValuePdpCount.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.replace(
-	// 																											',',
-	// 																											''
-	// 																										);
-	// 																									return cy.wrap(
-	// 																										{
-	// 																											tooltipText,
-	// 																											ValuePdpCount
-	// 																										}
-	// 																									);
-	// 																								}
-	// 																							);
-	// 																						} else {
-	// 																							cy.request(
-	// 																								{
-	// 																									method: 'POST',
-	// 																									url: dow,
-	// 																									headers:
-	// 																										header,
-	// 																									body: AreaPayload
-	// 																								}
-	// 																							).then(
-	// 																								(response: {
-	// 																									body: any[];
-	// 																								}) => {
-	// 																									if (
-	// 																										hodOrDow.includes(
-	// 																											'hod'
-	// 																										)
-	// 																									) {
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												2
-	// 																											);
-	// 																									} else
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												3
-	// 																											);
-	// 																									const pdpCount =
-	// 																										response.body.find(
-	// 																											(item: {
-	// 																												position: any;
-	// 																											}) =>
-	// 																												item.position ===
-	// 																												tooltipDay
-	// 																										);
-	// 																									let ValuePdpCount =
-	// 																										pdpCount.pdpViewCount;
-	// 																									ValuePdpCount =
-	// 																										ValuePdpCount.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.replace(
-	// 																											',',
-	// 																											''
-	// 																										);
-	// 																									return cy.wrap(
-	// 																										{
-	// 																											tooltipText,
-	// 																											ValuePdpCount
-	// 																										}
-	// 																									);
-	// 																								}
-	// 																							);
-	// 																						}
-	// 																					}
-	// 																				);
-	// 																			}
-	// 																		);
-	// 																}
-	// 															);
-	// 													}
-	// 												);
-	// 										});
-	// 								});
-	// 						}
-	// 					);
-	// 				}
-	// 			);
-	// 		}
-	// 	);
-	// }
+		const dates = await this.datesFromFilter(lastWeekNumberInList);
+		let dateStart = dates.startreversedDateReceived;
+		let dateEnd = dates.endreversedDateReceived;
+
+		await this.clickWeekNumbersList(lastWeekNumberInList).click();
+		await this.dateFilterApplyBtnClick();
+		await (await this.verifyDeptAndCatFilter()).click();
+		await (await this.checkUncheckADepartment(1)).click();
+		await (await this.checkUncheckADepartment(1)).click();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		const category = await this.checkSelectedCategoryIsApplied('1');
+		await (await this.verifyDeptAndCatFilter()).click();
+
+		const departNum = await this.getDepartmentNumber();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+
+		const cmpanyIdReceived = await this.getCompanyId();
+
+		let categoryNbr = category.text;
+		let departNumber = departNum.numberExtracted;
+
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		const tooltipButton = this.page.locator(
+			"//div[@id='hourly-daily-trend']//div[@role='button']"
+		);
+		await tooltipButton.hover();
+		await tooltipButton.click({ force: true });
+
+		const tooltipContainer = this.page.locator(
+			'#hourly-daily-trend .am5-tooltip-container div[role="tooltip"]'
+		);
+		await tooltipContainer.waitFor();
+		const tooltipText = (await tooltipContainer.innerText()).trim();
+		let url;
+		if (process.env.ENV === 'QA') {
+			url = dowStg;
+		} else if (process.env.ENV === 'PROD') {
+			url = dowProd;
+		} else {
+			url = dow;
+		}
+
+		const cookie = await this.page.context().cookies();
+		const luminationToken =
+			cookie.find((c) => c.name === 'LUMINATE_TOKEN')?.value ?? '';
+
+		const header = await this.getHeadersAndCookies(luminationToken);
+
+		categoryNbr = categoryNbr?.split(' ')[0];
+		let startDate = new Date(dateStart);
+		let endDate = new Date(dateEnd);
+
+		const datenumeric = await this.getStartAndEndDateIntervalHOD(
+			startDate,
+			endDate
+		);
+		interval = hodOrDow.includes('hod')
+			? datenumeric.endDt
+			: `${datenumeric.startDt},${datenumeric.endDt}`;
+
+		const AreaPayload = this.getPayloadAreaChart(
+			dateStart,
+			dateEnd,
+			`${departNumber}_${categoryNbr}`,
+			interval,
+			cmpanyIdReceived
+		);
+
+		const response = await this.page.request.post(url, {
+			headers: header,
+			data: AreaPayload
+		});
+
+		tooltipDay = hodOrDow.includes('hod')
+			? tooltipText.substring(0, 2)
+			: tooltipText.substring(0, 3);
+
+		const jsonResponse = await response.json();
+
+		const pdpCount = jsonResponse.find(
+			(item: any) => item.position === tooltipDay
+		);
+
+		let ValuePdpCount = pdpCount.pdpViewCount.toString();
+
+		return {
+			tooltipText: tooltipText.replace(',', ''),
+			ValuePdpCount
+		};
+	}
 
 	// tooltip from dow chart
 	async AvgtooltipDOW() {
 		return this.performanceElements.dowAvgTooltip();
 	}
-	// FIXME:
-	// //average DOW tooltips to check with api
-	// checkAvgTooltipsWithApiDOW(
-	// 	url: string,
-	// 	lastWeekNumberInList: any,
-	// 	minWaitTime: any,
-	// 	hodOrDow: string | string[]
-	// ) {
-	// 	let interval;
-	// 	let tooltipDay: any;
-	// 	return this.datesFromFilter(lastWeekNumberInList, minWaitTime).then(
-	// 		(dates: {
-	// 			startreversedDateReceived: any;
-	// 			endreversedDateReceived: any;
-	// 		}) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			this.clickWeekNumbersList(lastWeekNumberInList).click();
-	// 			this.dateFilterApplyBtnClick();
-	// 			this.verifyDeptAndCatFilter({ timeout: minWaitTime }).click();
-	// 			this.checkUncheckADepartment(1).click();
-	// 			this.checkUncheckADepartment(1).click();
-	// 			cy.contains('button', 'Confirm').click();
-	// 			cy.wait(minWaitTime);
-	// 			//get text of category selected and verify that category is selected i
-	// 			this.checkSelectedCategoryIsApplied(1).then(
-	// 				(category: { text: any }) => {
-	// 					this.verifyDeptAndCatFilter({
-	// 						timeout: minWaitTime
-	// 					}).click();
-	// 					this.getDepartmentNumber().then(
-	// 						(departNum: { numberExtracted: any }) => {
-	// 							cy.contains('button', 'Confirm').click();
-	// 							this.page
-	// 								.locatorCompanyId(url)
-	// 								.then((cmpanyId: any) => {
-	// 									let categoryNbr = category.text;
-	// 									let departNumber =
-	// 										departNum.numberExtracted;
-	// 									let cmpanyIdReceived = cmpanyId;
-	// 									cy.wait(minWaitTime);
-	// 									this.page
-	// 										.locator(
-	// 											"//div[@id='hourly-daily-trend']//div[@role='button']"
-	// 										)
-	// 										.invoke('show');
-	// 									this.page
-	// 										.locator(
-	// 											"//div[@id='hourly-daily-trend']//div[@role='button']"
-	// 										)
-	// 										.click({ force: true });
-	// 									cy.log('Hover action triggered');
-	// 									this.page
-	// 										.locator('#hourly-daily-trend')
-	// 										.trigger('mouseover')
-	// 										.then(() => {
-	// 											this.page
-	// 												.locator(
-	// 													'#hourly-daily-trend .am5-tooltip-container div[role="tooltip"]'
-	// 												)
-	// 												.should('be.visible')
-	// 												.should('not.be.empty')
-	// 												.invoke('text')
-	// 												.then(
-	// 													(
-	// 														tooltipText: string
-	// 													) => {
-	// 														console.log(
-	// 															'Tooltip text:',
-	// 															tooltipText.trim()
-	// 														);
-	// 														this.page
-	// 															.locator(
-	// 																'//div[@id="hourly-daily-trend"]//div[@role="alert"]'
-	// 															)
-	// 															.invoke('show');
-	// 														this.page
-	// 															.locator(
-	// 																'//div[@id="hourly-daily-trend"]//div[@role="alert"]'
-	// 															)
-	// 															.click({
-	// 																force: true
-	// 															});
-	// 														this.page
-	// 															.locator(
-	// 																"//div[@id='hourly-daily-trend']//canvas[@class='am5-layer-30']"
-	// 															)
-	// 															.invoke('show')
-	// 															.click({
-	// 																force: true
-	// 															});
-	// 														this.AvgtooltipDOW()
-	// 															.invoke('text')
-	// 															.then(
-	// 																(
-	// 																	tooltipText: string
-	// 																) => {
-	// 																	cy.wait(
-	// 																		minWaitTime
-	// 																	);
-	// 																	if (
-	// 																		url ==
-	// 																		'https://stg.walmartluminate.com/digitallandscapes/'
-	// 																	) {
-	// 																		cy.intercept(
-	// 																			dowStg
-	// 																		).as(
-	// 																			'dow'
-	// 																		);
-	// 																	} else if (
-	// 																		url ==
-	// 																		'https://www.walmartluminate.com/digitallandscapes/'
-	// 																	) {
-	// 																		cy.intercept(
-	// 																			dowProd
-	// 																		).as(
-	// 																			'dow'
-	// 																		);
-	// 																	} else {
-	// 																		cy.intercept(
-	// 																			dow
-	// 																		).as(
-	// 																			'dow'
-	// 																		);
-	// 																	}
-	// 																	this.page
-	// 																		.locatorCookie(
-	// 																			'LUMINATE_TOKEN'
-	// 																		)
-	// 																		.then(
-	// 																			(cookie: {
-	// 																				value: any;
-	// 																			}) => {
-	// 																				const luminationToken =
-	// 																					cookie
-	// 																						? cookie.value
-	// 																						: null;
-	// 																				let header =
-	// 																					new ApiHeaders().getHeadersAndCookies(
-	// 																						url,
-	// 																						luminationToken
-	// 																					);
-	// 																				categoryNbr =
-	// 																					categoryNbr.split(
-	// 																						' '
-	// 																					)[0];
-	// 																				let startDate =
-	// 																					new Date(
-	// 																						dateStart
-	// 																					);
-	// 																				let endDate =
-	// 																					new Date(
-	// 																						dateEnd
-	// 																					);
-	// 																				this.getStartAndEndDateIntervalHOD(
-	// 																					startDate,
-	// 																					endDate
-	// 																				).then(
-	// 																					(datenumeric: {
-	// 																						endDt: string;
-	// 																						startDt: string;
-	// 																					}) => {
-	// 																						if (
-	// 																							hodOrDow.includes(
-	// 																								'hod'
-	// 																							)
-	// 																						) {
-	// 																							interval =
-	// 																								datenumeric.endDt;
-	// 																						} else
-	// 																							interval =
-	// 																								datenumeric.startDt +
-	// 																								',' +
-	// 																								datenumeric.endDt;
-	// 																						let AreaPayload =
-	// 																							new ApiPayloads().getPayloadAreaChart(
-	// 																								dateStart,
-	// 																								dateEnd,
-	// 																								departNumber +
-	// 																									'_' +
-	// 																									categoryNbr,
-	// 																								interval,
-	// 																								cmpanyIdReceived
-	// 																							);
-	// 																						if (
-	// 																							url ==
-	// 																							'https://stg.walmartluminate.com/digitallandscapes/'
-	// 																						) {
-	// 																							cy.request(
-	// 																								{
-	// 																									method: 'POST',
-	// 																									url: dowStg,
-	// 																									headers:
-	// 																										header,
-	// 																									body: AreaPayload
-	// 																								}
-	// 																							).then(
-	// 																								(response: {
-	// 																									body: any[];
-	// 																								}) => {
-	// 																									if (
-	// 																										hodOrDow.includes(
-	// 																											'hod'
-	// 																										)
-	// 																									) {
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												2
-	// 																											);
-	// 																									} else
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												3
-	// 																											);
-	// 																									const AvgValuePdpViewCount =
-	// 																										response.body.find(
-	// 																											(item: {
-	// 																												position: any;
-	// 																											}) =>
-	// 																												item.position ===
-	// 																												tooltipDay
-	// 																										);
-	// 																									let AvgValuePdpCount =
-	// 																										AvgValuePdpViewCount.avgPdpViewCount;
-	// 																									AvgValuePdpCount =
-	// 																										AvgValuePdpCount.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.replace(
-	// 																											',',
-	// 																											''
-	// 																										);
-	// 																									return cy.wrap(
-	// 																										{
-	// 																											tooltipText,
-	// 																											AvgValuePdpCount
-	// 																										}
-	// 																									);
-	// 																								}
-	// 																							);
-	// 																						} else if (
-	// 																							url ==
-	// 																							'https://www.walmartluminate.com/digitallandscapes/'
-	// 																						) {
-	// 																							cy.request(
-	// 																								{
-	// 																									method: 'POST',
-	// 																									url: dowProd,
-	// 																									headers:
-	// 																										header,
-	// 																									body: AreaPayload
-	// 																								}
-	// 																							).then(
-	// 																								(response: {
-	// 																									body: any[];
-	// 																								}) => {
-	// 																									if (
-	// 																										hodOrDow.includes(
-	// 																											'hod'
-	// 																										)
-	// 																									) {
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												2
-	// 																											);
-	// 																									} else
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												3
-	// 																											);
-	// 																									const AvgValuePdpViewCount =
-	// 																										response.body.find(
-	// 																											(item: {
-	// 																												position: any;
-	// 																											}) =>
-	// 																												item.position ===
-	// 																												tooltipDay
-	// 																										);
-	// 																									let AvgValuePdpCount =
-	// 																										AvgValuePdpViewCount.avgPdpViewCount;
-	// 																									AvgValuePdpCount =
-	// 																										AvgValuePdpCount.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.replace(
-	// 																											',',
-	// 																											''
-	// 																										);
-	// 																									return cy.wrap(
-	// 																										{
-	// 																											tooltipText,
-	// 																											AvgValuePdpCount
-	// 																										}
-	// 																									);
-	// 																								}
-	// 																							);
-	// 																						} else {
-	// 																							cy.request(
-	// 																								{
-	// 																									method: 'POST',
-	// 																									url: dow,
-	// 																									headers:
-	// 																										header,
-	// 																									body: AreaPayload
-	// 																								}
-	// 																							).then(
-	// 																								(response: {
-	// 																									body: any[];
-	// 																								}) => {
-	// 																									if (
-	// 																										hodOrDow.includes(
-	// 																											'hod'
-	// 																										)
-	// 																									) {
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												2
-	// 																											);
-	// 																									} else
-	// 																										tooltipDay =
-	// 																											tooltipText.substring(
-	// 																												0,
-	// 																												3
-	// 																											);
-	// 																									const AvgValuePdpViewCount =
-	// 																										response.body.find(
-	// 																											(item: {
-	// 																												position: any;
-	// 																											}) =>
-	// 																												item.position ===
-	// 																												tooltipDay
-	// 																										);
-	// 																									let AvgValuePdpCount =
-	// 																										AvgValuePdpViewCount.avgPdpViewCount;
-	// 																									AvgValuePdpCount =
-	// 																										AvgValuePdpCount.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.toString();
-	// 																									tooltipText =
-	// 																										tooltipText.replace(
-	// 																											',',
-	// 																											''
-	// 																										);
-	// 																									return cy.wrap(
-	// 																										{
-	// 																											tooltipText,
-	// 																											AvgValuePdpCount
-	// 																										}
-	// 																									);
-	// 																								}
-	// 																							);
-	// 																						}
-	// 																					}
-	// 																				);
-	// 																			}
-	// 																		);
-	// 																}
-	// 															);
-	// 													}
-	// 												);
-	// 										});
-	// 								});
-	// 						}
-	// 					);
-	// 				}
-	// 			);
-	// 		}
-	// 	);
-	// }
+	//average DOW tooltips to check with api
+	async checkAvgTooltipsWithApiDOW(
+		lastWeekNumberInList: string,
+		hodOrDow: string
+	) {
+		let interval;
+		let tooltipDay;
+
+		const dates = await this.datesFromFilter(lastWeekNumberInList);
+		let dateStart = dates.startreversedDateReceived;
+		let dateEnd = dates.endreversedDateReceived;
+
+		await this.clickWeekNumbersList(lastWeekNumberInList).click();
+		await this.dateFilterApplyBtnClick();
+		await (await this.verifyDeptAndCatFilter()).click();
+		await (await this.checkUncheckADepartment(1)).click();
+		await (await this.checkUncheckADepartment(1)).click();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		// Get text of category selected and verify that the category is selected
+		const category = await this.checkSelectedCategoryIsApplied('1');
+		await (await this.verifyDeptAndCatFilter()).click();
+
+		const departNum = await this.getDepartmentNumber();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+
+		const cmpanyIdReceived = await this.getCompanyId();
+
+		let categoryNbr = category.text;
+		let departNumber = departNum.numberExtracted;
+
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		const tooltipButton = this.page.locator(
+			"//div[@id='hourly-daily-trend']//div[@role='button']"
+		);
+		await tooltipButton.hover();
+		await tooltipButton.click({ force: true });
+		console.log('Hover action triggered');
+
+		const tooltipContainer = this.page.locator(
+			'#hourly-daily-trend .am5-tooltip-container div[role="tooltip"]'
+		);
+		await tooltipContainer.waitFor();
+		let tooltipText = (await tooltipContainer.innerText()).trim();
+
+		let url;
+		if (process.env.ENV === 'QA') {
+			url = dowStg;
+		} else if (process.env.ENV === 'PROD') {
+			url = dowProd;
+		} else {
+			url = dow;
+		}
+
+		const cookie = await this.page.context().cookies();
+		const luminationToken =
+			cookie.find((c) => c.name === 'LUMINATE_TOKEN')?.value ?? '';
+
+		const header = await this.getHeadersAndCookies(luminationToken);
+
+		categoryNbr = categoryNbr?.split(' ')[0];
+		let startDate = new Date(dateStart);
+		let endDate = new Date(dateEnd);
+
+		const datenumeric = await this.getStartAndEndDateIntervalHOD(
+			startDate,
+			endDate
+		);
+		interval = hodOrDow.includes('hod')
+			? datenumeric.endDt
+			: `${datenumeric.startDt},${datenumeric.endDt}`;
+
+		const AreaPayload = this.getPayloadAreaChart(
+			dateStart,
+			dateEnd,
+			`${departNumber}_${categoryNbr}`,
+			interval,
+			cmpanyIdReceived
+		);
+
+		const response = await this.page.request.post(url, {
+			headers: header,
+			data: AreaPayload
+		});
+
+		tooltipDay = hodOrDow.includes('hod')
+			? tooltipText.substring(0, 2)
+			: tooltipText.substring(0, 3);
+
+		const jsonResponse = await response.json();
+
+		const AvgValuePdpViewCount = jsonResponse.find(
+			(item: any) => item.position === tooltipDay
+		);
+		let AvgValuePdpCount = AvgValuePdpViewCount.avgPdpViewCount.toString();
+
+		tooltipText = tooltipText.replace(',', '');
+
+		return {
+			tooltipText,
+			AvgValuePdpCount
+		};
+	}
 }
 export default PerformancePage;

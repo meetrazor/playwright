@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { sessionPath } from './config';
+import * as dotenv from 'dotenv';
 
 /**
  * Read environment variables from file.
@@ -7,17 +8,17 @@ import { sessionPath } from './config';
  */
 // import dotenv from 'dotenv';
 // import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+dotenv.config();
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
 	globalSetup: require.resolve('./global-setup'),
-	globalTeardown:require.resolve('./global-teardown'),
+	globalTeardown: require.resolve('./global-teardown'),
 	testDir: './tests',
 	testMatch: '*.spec.ts',
-	grep:[/@Regression/,/@Smoke/],
+	grep: [/@Regression/, /@Smoke/],
 	/* Run tests in files in parallel */
 	fullyParallel: false,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -32,8 +33,8 @@ export default defineConfig({
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 	use: {
 		bypassCSP: true,
-		launchOptions:{headless:false,slowMo:250},
-		storageState:sessionPath,
+		launchOptions: { headless: false, slowMo: 250 },
+		storageState: sessionPath,
 		/* Base URL to use in actions like `await page.goto('/')`. */
 		// baseURL: 'http://127.0.0.1:3000',
 

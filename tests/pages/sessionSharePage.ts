@@ -1,4 +1,6 @@
 import { expect, Page } from '@playwright/test';
+import PerformancePage from './performancePage';
+import { DEFAULT_TIMEOUT } from '../../config';
 
 class SessionSharePage {
 	page: Page;
@@ -144,17 +146,115 @@ class SessionSharePage {
 			metricsName
 		);
 	}
+
+	async checkTooltipsWithApi(lastWeekNumberInList: string) {
+		// Get date range from the filter
+		const perfPage = new PerformancePage(this.page);
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		const dateStart = dates.startreversedDateReceived;
+		const dateEnd = dates.endreversedDateReceived;
+
+		// Interact with the week number list and apply date filter
+		await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await perfPage.dateFilterApplyBtnClick();
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+
+		// Toggle department selection
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+
+		// Get the selected category and department number
+		const category = await perfPage.checkSelectedCategoryIsApplied('1');
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+		const departNum = await perfPage.getDepartmentNumber();
+		const cmpanyIdReceived = await perfPage.getCompanyId();
+
+		// Extract category and department numbers
+		let categoryNbr = category?.text?.split(' ')[0];
+		const departNumber = departNum.numberExtracted;
+
+		// Trigger hover action on the bar chart
+		await this.page
+			.locator("//div[@id='bar-chart-container']//div[@role='button']")
+			.hover();
+		await this.page
+			.locator("//div[@id='bar-chart-container']//div[@role='button']")
+			.click({ force: true });
+
+		// Log the hover action and trigger tooltip
+		await this.page.locator('#bar-chart-container').hover();
+		const tooltipText = await this.page
+			.locator(
+				'#bar-chart-container .am5-tooltip-container div[role="tooltip"]'
+			)
+			.textContent();
+		console.log('Tooltip text:', tooltipText?.trim());
+
+		await this.page.waitForTimeout(4000);
+
+		// Interact with the alert and canvas elements
+		await this.page
+			.locator('//div[@id="bar-chart-container"]//div[@role="alert"]')
+			.hover();
+		await this.page
+			.locator('//div[@id="bar-chart-container"]//div[@role="alert"]')
+			.click({ force: true });
+		await this.page
+			.locator(
+				"//div[@id='bar-chart-container']//canvas[@class='am5-layer-30']"
+			)
+			.hover();
+		await this.page
+			.locator(
+				"//div[@id='bar-chart-container']//canvas[@class='am5-layer-30']"
+			)
+			.click({ force: true });
+
+		// API request interception logic based on environment
+		let apiEndpoint;
+		if (process.env.ENV === 'QA') {
+			apiEndpoint = 'sessionshareStg';
+		} else if (process.env.ENV === 'PROD') {
+			apiEndpoint = 'sessionshareProd';
+		} else {
+			apiEndpoint = 'sessionshare';
+		}
+
+		// Get authentication token and set headers
+		const cookie = await this.page.context().cookies();
+		const luminationToken =
+			cookie.find((c) => c.name === 'LUMINATE_TOKEN')?.value || '';
+		const headers = await perfPage.getHeadersAndCookies(luminationToken);
+
+		// Prepare the API payload
+		const ssPayload = perfPage.getPayloadBillboardTerm(
+			dateStart,
+			dateEnd,
+			`${departNumber}_${categoryNbr}`,
+			cmpanyIdReceived
+		);
+
+		// Make API request based on the environment
+		const response = await this.page.request.post(apiEndpoint, {
+			headers: headers,
+			data: ssPayload
+		});
+
+		const responseBody = await response.json();
+		const pdpSessionShareValue = responseBody[0].pdpSessionShare.toString();
+
+		// Return the tooltip text and session share value
+		return {
+			tooltipText: tooltipText?.toString(),
+			pdpSessionShareValue
+		};
+	}
+
 	// FIXME
-	// async checkTooltipsWithApi(
-	// 	url,
-	// 	lastWeekNumberInList,
-	// 	minWaitTime,
-	// 	sessionShare
-	// ) {
-	// 	const dates = await perfPage.datesFromFilter(
-	// 		lastWeekNumberInList,
-	// 		minWaitTime
-	// 	);
+	// async checkTooltipsWithApi(lastWeekNumberInList: string) {
+	// 	const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
 	// 	const dateStart = dates.startreversedDateReceived;
 	// 	const dateEnd = dates.endreversedDateReceived;
 	// 	await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();

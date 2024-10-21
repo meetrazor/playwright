@@ -4,19 +4,20 @@ import LoginPage from './tests/pages/loginPage';
 import fs from 'fs';
 
 async function globalSetup() {
-	if(fs.existsSync(sessionPath)){
-		fs.unlinkSync(sessionPath)
+	if (fs.existsSync(sessionPath)) {
+		fs.unlinkSync(sessionPath);
 	}
 	//some code
+	console.log(process.env.ENV);
 	const browser = await chromium.launch();
 	const page = await browser.newPage();
 	const loginPage = new LoginPage(page);
 	await loginPage.performLogin();
 	await loginPage.verifyLogin();
 
-	await page.context().storageState({path:sessionPath})
+	await page.context().storageState({ path: sessionPath });
 
-	await browser.close()
+	await browser.close();
 }
 
 export default globalSetup;

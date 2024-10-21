@@ -1,12 +1,12 @@
-const DEV_URL = 'https://www.google.com';
+const DEV_URL = 'https://dev.walmartluminate.com/digitallandscapes/';
 
 const QA_URL = 'https://stg.walmartluminate.com/digitallandscapes/';
 
-const PROD_URL = 'https://www.google.com';
+const PROD_URL = 'https://www.walmartluminate.com/digitallandscapes/';
 
 const DEFAULT_URL = 'https://stg.walmartluminate.com/digitallandscapes/';
 
-export const sessionPath = './session.json'
+export const sessionPath = './session.json';
 
 export const DEFAULT_TIMEOUT = 3000;
 
