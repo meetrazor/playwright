@@ -22,6 +22,7 @@ import {
 	last4WeekText,
 	lastWeekNumberInList,
 	lastWeekText,
+	messageSessionConversionMultiUPC,
 	PlaformApp,
 	PlaformWeb,
 	title,
@@ -1475,6 +1476,211 @@ test.describe(
 				)
 			).toBeTruthy();
 			await perfPage.deleteDownloadedFile();
+		});
+	}
+);
+
+test.describe(
+	'Performance: Test billboard , session conversion and session share for UPC',
+	{ tag: ['@Regression'] },
+	() => {
+		test('071: verify billboard menus are visible when upcs are selected ', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.selectLastWeekDtAndCategory(lastWeekNumberInList);
+			if (process.env.ENV === 'PROD') {
+				await perfPage.pasteUpcs(dashboardData.upcProd); // aupcProd
+				await expect(
+					await perfPage.pastedUpcCheck(dashboardData.upcProd) // aupcProd
+				).toBeVisible();
+				await perfPage.pasteUpcTextArea(dashboardData.otherUPCSProd); // upcsProd
+			} else {
+				await perfPage.pasteUpcs(dashboardData.upc); // aUpc
+				await expect(
+					await perfPage.pastedUpcCheck(dashboardData.upc) // aUpc
+				).toBeVisible();
+				await perfPage.pasteUpcTextArea(dashboardData.upcs); //Upcs
+			}
+
+			await (await perfPage.ConfirmBtnUpc()).click();
+			await expect(await perfPage.clickBillBoardMenus(1)).toBeVisible();
+		});
+
+		test('072: verify billboard data for upc is coming correctly from api', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.selectLastWeekDtAndCategory(lastWeekNumberInList);
+			if (process.env.ENV === 'PROD') {
+				perfPage.checkBillBoardDataUpc(
+					dashboardData.upcProd,
+					lastWeekNumberInList,
+					billboardMetrics1,
+					'1'
+				);
+			} else {
+				perfPage.checkBillBoardDataUpc(
+					dashboardData.upc,
+					lastWeekNumberInList,
+					billboardMetrics1,
+					'1'
+				);
+			}
+		});
+
+		test('073: verify for upc -Donut Chart should visible and have EXTERNAL,Mobile APP - NON-SEARCH,Mobile APP - SEARCH,Walmart.com - NON-SEARCH,Walmart.com - SEARCH when web & app both are selected', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.selectLastWeekDtAndCategory(lastWeekNumberInList);
+			if (process.env.ENV === 'PROD') {
+				await perfPage.pasteUpcs(dashboardData.upcProd); // aupcProd
+				await expect(
+					await perfPage.pastedUpcCheck(dashboardData.upcProd) // aupcProd
+				).toBeVisible();
+				await perfPage.pasteUpcTextArea(dashboardData.otherUPCSProd); // upcsProd
+			} else {
+				await perfPage.pasteUpcs(dashboardData.upc); // aUpc
+				await expect(
+					await perfPage.pastedUpcCheck(dashboardData.upc) // aUpc
+				).toBeVisible();
+				await perfPage.pasteUpcTextArea(dashboardData.upcs); //Upcs
+
+				await (await perfPage.ConfirmBtnUpc()).click();
+				await perfPage.waitForAPIResponse(donutChart);
+				await expect(await perfPage.donutChartPresence()).toBeVisible();
+			}
+		});
+
+		test('074: for multiple upcs verify session conversion chart is hidden for upc but see details link is there', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.selectLastWeekDtAndCategory(lastWeekNumberInList);
+			if (process.env.ENV === 'PROD') {
+				await perfPage.pasteUpcs(dashboardData.upcProd); // aupcProd
+				await expect(
+					await perfPage.pastedUpcCheck(dashboardData.upcProd) // aupcProd
+				).toBeVisible();
+				await perfPage.pasteUpcTextArea(dashboardData.otherUPCSProd); // upcsProd
+			} else {
+				await perfPage.pasteUpcs(dashboardData.upc); // aUpc
+				await expect(
+					await perfPage.pastedUpcCheck(dashboardData.upc) // aUpc
+				).toBeVisible();
+				await perfPage.pasteUpcTextArea(dashboardData.upcs); //Upcs
+			}
+
+			await (await perfPage.ConfirmBtnUpc()).click();
+			await page.waitForTimeout(DEFAULT_TIMEOUT);
+			await expect(
+				perfPage.performanceElements.ConversionChartMetrics()
+			).not.toBeVisible();
+
+			await expect(
+				perfPage.performanceElements.seeDetailsSessionConvLink()
+			).toBeVisible();
+			await expect(
+				page.locator(`text=${messageSessionConversionMultiUPC}`)
+			).toBeVisible();
+		});
+		test('075: for multiple upcs: verify that user would not see session share chart but have visibility of see details and should see a message', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.selectLastWeekDtAndCategory(lastWeekNumberInList);
+			if (process.env.ENV === 'PROD') {
+				await perfPage.pasteUpcs(dashboardData.upcProd); // aupcProd
+				await expect(
+					await perfPage.pastedUpcCheck(dashboardData.upcProd) // aupcProd
+				).toBeVisible();
+				await perfPage.pasteUpcTextArea(dashboardData.otherUPCSProd); // upcsProd
+			} else {
+				await perfPage.pasteUpcs(dashboardData.upc); // aUpc
+				await expect(
+					await perfPage.pastedUpcCheck(dashboardData.upc) // aUpc
+				).toBeVisible();
+				await perfPage.pasteUpcTextArea(dashboardData.upcs); //Upcs
+			}
+			await (await perfPage.ConfirmBtnUpc()).click();
+			await perfPage.waitForAPIResponse(aria);
+
+			await expect(
+				perfPage.performanceElements.sessionShareChart()
+			).not.toBeVisible();
+
+			await expect(
+				await perfPage.seeDetailsLinkSessionShareChart()
+			).toBeVisible();
+			await expect(
+				page.locator(`text=${messageSessionConversionMultiUPC}`)
+			).toBeVisible();
+		});
+	}
+);
+test.describe(
+	'Performance: for UPCS: Test DOW  in performance home page',
+	{ tag: ['@Regression'] },
+	() => {
+		test('076: for upcs: verify that user would see DOW Chart visibility', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.selectLastWeekDtAndCategory(lastWeekNumberInList);
+			await page.waitForTimeout(DEFAULT_TIMEOUT);
+
+			if (process.env.ENV === 'PROD') {
+				await perfPage.pasteUpcs(dashboardData.upcProd); // aupcProd
+				await expect(
+					await perfPage.pastedUpcCheck(dashboardData.upcProd) // aupcProd
+				).toBeVisible();
+				await perfPage.pasteUpcTextArea(dashboardData.otherUPCSProd); // upcsProd
+			} else {
+				await perfPage.pasteUpcs(dashboardData.upc); // aUpc
+				await expect(
+					await perfPage.pastedUpcCheck(dashboardData.upc) // aUpc
+				).toBeVisible();
+				await perfPage.pasteUpcTextArea(dashboardData.upcs); //Upcs
+			}
+			await (await perfPage.ConfirmBtnUpc()).click();
+			await perfPage.waitForAPIResponse(aria);
+			await expect(
+				await perfPage.verifyvisibilityDayOfTheWeekChart()
+			).toBeVisible();
+		});
+	}
+);
+test.describe(
+	'Test hover on the donut chart and verify tooltip message',
+	{ tag: ['@Regression', '@Smoke'] },
+	() => {
+		test('77: verify the text on tooltip of donut chart', async ({
+			page
+		}) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.selectLastWeekDtAndCategory(lastWeekNumberInList);
+			await perfPage.verifyToolTipMessage();
+		});
+	}
+);
+
+test.describe(
+	'Performance: Logout Functionality',
+	{ tag: ['@Regression'] },
+	() => {
+		test('078: check logout', async ({ page }) => {
+			const perfPage = new performancePage(page);
+			await perfPage.navigateToDefaultCompany();
+			await perfPage.logout();
+			await expect(await perfPage.login()).toBeVisible();
 		});
 	}
 );

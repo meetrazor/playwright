@@ -93,7 +93,7 @@ class CommonClass {
 			categories: [category],
 			brands: [],
 			upcs: [],
-			comparisonType: "timePeriod"
+			comparisonType: 'timePeriod'
 		};
 		return billboardPayloads;
 	}
@@ -278,6 +278,15 @@ class CommonClass {
 		} catch (err) {
 			console.error('Error deleting files: ', err);
 		}
+	}
+
+	async getCookie() {
+		const cookie = await this.page.context().cookies();
+		const cookieString = cookie.reduce((acc, curr) => {
+			return `${acc} ${curr.name}=${curr.value};`;
+		}, '');
+
+		return cookieString;
 	}
 }
 

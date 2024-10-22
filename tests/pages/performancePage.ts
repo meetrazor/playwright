@@ -1,7 +1,14 @@
 import { expect, type Page } from '@playwright/test';
 import { DEFAULT_TIMEOUT } from '../../config';
 import CommonClass from './commonFunctions';
-import { dow, dowProd, dowStg } from '../../shared/routes';
+import {
+	billboard,
+	billboardProd,
+	billboardStg,
+	dow,
+	dowProd,
+	dowStg
+} from '../../shared/routes';
 
 class PerformancePage extends CommonClass {
 	performanceElements = {
@@ -52,7 +59,7 @@ class PerformancePage extends CommonClass {
 			this.page.locator("//button[text()='Session Purchase Rate (%)']"),
 
 		// visibility of session conversion chart
-		ConversionChartMetrics: (metrics: string) =>
+		ConversionChartMetrics: (metrics: string = '') =>
 			this.page.locator("//div[text()='" + metrics + "']"),
 
 		//verify visibility of day of the week chart
@@ -228,9 +235,11 @@ class PerformancePage extends CommonClass {
 			this.page.locator(
 				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div/div[1]/div/button"
 			),
-		getFullMetricsValueBillboard: (index:string) =>
+		getFullMetricsValueBillboard: (index: string) =>
 			this.page.locator(
-				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div/div["+index+"]/div"
+				"//body/div[@id='app']/div/div[@data-test-cy='dashboard']/div[@data-test-cy='MetricsBox']/div/div[" +
+					index +
+					']/div'
 			),
 		// xpath to get metrics value from billboard for 2nd metrics
 		getSecondMetricsValueBillboard: () =>
@@ -1442,205 +1451,7 @@ class PerformancePage extends CommonClass {
 		return { numberExtracted };
 	}
 
-	// FIXME:
 	//billboard data check with api
-	// billboardWithAPI(
-	// 	url: string,
-	// 	lastWeekNumberInList: any,
-	// 	minWaitTime: any,
-	// 	metricsToCheck: any,
-	// 	menuPosition: any
-	// ) {
-	// 	return this.datesFromFilter(lastWeekNumberInList, minWaitTime).then(
-	// 		(dates: {
-	// 			startreversedDateReceived: any;
-	// 			endreversedDateReceived: any;
-	// 		}) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			cy.log(dateStart);
-	// 			this.clickWeekFilter(lastWeekNumberInList);
-	// 			this.dateFilterApplyBtnClick();
-	// 			this.verifyDeptAndCatFilter({ timeout: minWaitTime }).click();
-	// 			cy.contains('button', 'Confirm').click();
-	// 			//get text of category selected and verify that category is selected i
-	// 			this.checkSelectedCategoryIsApplied(1).then(
-	// 				(category: { text: any }) => {
-	// 					this.verifyDeptAndCatFilter({
-	// 						timeout: minWaitTime
-	// 					}).click();
-	// 					this.getDepartmentNumber().then(
-	// 						(departNum: { numberExtracted: any }) => {
-	// 							cy.contains('button', 'Confirm').click();
-	// 							this.page
-	// 								.locatorCompanyId(url)
-	// 								.then((cmpanyId: any) => {
-	// 									let compnyId = cmpanyId;
-	// 									let categoryNbr = category.text;
-	// 									let dNum = departNum.numberExtracted;
-	// 									//click on billboard menu button
-	// 									this.clickBillBoardMenus(
-	// 										menuPosition
-	// 									).click();
-	// 									this.clickBillBoardMenu(
-	// 										metricsToCheck
-	// 									).click();
-	// 									if (
-	// 										url ==
-	// 										'https://stg.walmartluminate.com/digitallandscapes/'
-	// 									) {
-	// 										cy.intercept(billboardStg).as(
-	// 											'billboard'
-	// 										);
-	// 									} else if (
-	// 										url ==
-	// 										'https://www.walmartluminate.com/digitallandscapes/'
-	// 									) {
-	// 										cy.intercept(billboardProd).as(
-	// 											'billboard'
-	// 										);
-	// 									} else {
-	// 										cy.intercept(billboard).as(
-	// 											'billboard'
-	// 										);
-	// 									}
-	// 									this.page
-	// 										.locatorCookie('LUMINATE_TOKEN')
-	// 										.then((cookie: { value: any }) => {
-	// 											const luminationToken = cookie
-	// 												? cookie.value
-	// 												: null;
-	// 											let header =
-	// 												new ApiHeaders().getHeadersAndCookies(
-	// 													url,
-	// 													luminationToken
-	// 												);
-	// 											categoryNbr =
-	// 												categoryNbr.split(' ')[0];
-	// 											let billboardPayload =
-	// 												new ApiPayloads().getPayloadBillboardTerm(
-	// 													dateStart,
-	// 													dateEnd,
-	// 													dNum +
-	// 														'_' +
-	// 														categoryNbr,
-	// 													compnyId
-	// 												);
-	// 											if (
-	// 												url ==
-	// 												'https://stg.walmartluminate.com/digitallandscapes/'
-	// 											) {
-	// 												cy.request({
-	// 													method: 'POST',
-	// 													url: billboardStg,
-	// 													headers: header,
-	// 													body: billboardPayload
-	// 												}).then(
-	// 													(response: {
-	// 														body: any[];
-	// 													}) => {
-	// 														const metricsReceivedFromApi =
-	// 															response.body.find(
-	// 																(item: {
-	// 																	title: any;
-	// 																}) =>
-	// 																	item.title ===
-	// 																	metricsToCheck
-	// 															);
-	// 														this.getBillboardMetrics().then(
-	// 															(metricsValue: {
-	// 																text: any;
-	// 															}) => {
-	// 																cy.wait(
-	// 																	minWaitTime
-	// 																);
-	// 																expect(
-	// 																	metricsValue.text
-	// 																).to.contain(
-	// 																	metricsReceivedFromApi.value
-	// 																);
-	// 															}
-	// 														);
-	// 													}
-	// 												);
-	// 											} else if (
-	// 												url ==
-	// 												'https://www.walmartluminate.com/digitallandscapes/'
-	// 											) {
-	// 												cy.request({
-	// 													method: 'POST',
-	// 													url: billboardProd,
-	// 													headers: header,
-	// 													body: billboardPayload
-	// 												}).then(
-	// 													(response: {
-	// 														body: any[];
-	// 													}) => {
-	// 														const metricsReceivedFromApi =
-	// 															response.body.find(
-	// 																(item: {
-	// 																	title: any;
-	// 																}) =>
-	// 																	item.title ===
-	// 																	metricsToCheck
-	// 															);
-	// 														this.getBillboardMetrics().then(
-	// 															(metricsValue: {
-	// 																text: any;
-	// 															}) => {
-	// 																cy.wait(
-	// 																	minWaitTime
-	// 																);
-	// 																expect(
-	// 																	metricsValue.text
-	// 																).to.contain(
-	// 																	metricsReceivedFromApi.value
-	// 																);
-	// 															}
-	// 														);
-	// 													}
-	// 												);
-	// 											} else {
-	// 												cy.request({
-	// 													method: 'POST',
-	// 													url: billboard,
-	// 													headers: header,
-	// 													body: billboardPayload
-	// 												}).then(
-	// 													(response: {
-	// 														body: any[];
-	// 													}) => {
-	// 														const metricsReceivedFromApi =
-	// 															response.body.find(
-	// 																(item: {
-	// 																	title: any;
-	// 																}) =>
-	// 																	item.title ===
-	// 																	metricsToCheck
-	// 															);
-	// 														this.getBillboardMetrics().then(
-	// 															(metricsValue: {
-	// 																text: any;
-	// 															}) => {
-	// 																expect(
-	// 																	metricsValue.text
-	// 																).to.contain(
-	// 																	metricsReceivedFromApi.value
-	// 																);
-	// 															}
-	// 														);
-	// 													}
-	// 												);
-	// 											}
-	// 										});
-	// 								});
-	// 						}
-	// 					);
-	// 				}
-	// 			);
-	// 		}
-	// 	);
-	// }
 	async billboardWithAPI(
 		lastWeekNumberInList: string,
 		metricsToCheck: string,
@@ -1679,9 +1490,7 @@ class PerformancePage extends CommonClass {
 		let apiUrl = await this.getBillboardAPIURL();
 
 		// Get LUMINATE_TOKEN cookie
-		const cookie = await this.page.context().cookies();
-		const cookieString = cookie.reduce((acc,curr) =>{
-			return `${acc} ${curr.name}=${curr.value};`},'')
+		const cookieString = await this.getCookie();
 		// Prepare API headers and payload
 		const header = await this.getHeadersAndCookies(cookieString);
 		categoryNbr = categoryNbr?.split(' ')[0];
@@ -1705,155 +1514,88 @@ class PerformancePage extends CommonClass {
 		// Get the metrics displayed on the page
 
 		// Assert that the metrics match
-		expect( await this.performanceElements.getFullMetricsValueBillboard('1').allInnerTexts()).toContain(metricsReceivedFromApi.title);
+		expect(
+			await this.performanceElements
+				.getFullMetricsValueBillboard('1')
+				.allInnerTexts()
+		).toContain(metricsReceivedFromApi.title);
 	}
 
 	// for upcs verify billboard data
-	// checkBillBoardDataUpc(
-	// 	aUpc: any,
-	// 	url: string,
-	// 	lastWeekNumberInList: any,
-	// 	minWaitTime: any,
-	// 	metricsToCheck: any,
-	// 	menuPosition: any
-	// ) {
-	// 	this.datesFromFilter(lastWeekNumberInList, minWaitTime).then(
-	// 		(dates: {
-	// 			startreversedDateReceived: any;
-	// 			endreversedDateReceived: any;
-	// 		}) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			this.clickWeekFilter(lastWeekNumberInList);
-	// 			cy.wait(minWaitTime);
-	// 			this.dateFilterApplyBtnClick();
-	// 			this.checkAndClickOnUpcBtn().click({ timeout: minWaitTime });
-	// 			this.pasteUpcs(aUpc);
-	// 			this.ConfirmBtnUpc().click();
-	// 			//click on billboard menu button
-	// 			cy.wait(minWaitTime);
-	// 			this.clickBillBoardMenus(menuPosition, {
-	// 				timeout: 7000
-	// 			}).click();
-	// 			this.clickBillBoardMenu(metricsToCheck).click();
-	// 			if (
-	// 				url == 'https://stg.walmartluminate.com/digitallandscapes/'
-	// 			) {
-	// 				cy.intercept(billboardStg).as('billboard');
-	// 			} else if (
-	// 				url == 'https://www.walmartluminate.com/digitallandscapes/'
-	// 			) {
-	// 				cy.intercept(billboardProd).as('billboard');
-	// 			} else {
-	// 				cy.intercept(billboard).as('billboard');
-	// 			}
-	// 			this.page
-	// 				.locatorCookie('LUMINATE_TOKEN')
-	// 				.then((cookie: { value: any }) => {
-	// 					const luminationToken = cookie ? cookie.value : null;
-	// 					let header = new ApiHeaders().getHeadersAndCookies(
-	// 						url,
-	// 						luminationToken
-	// 					);
-	// 					this.page
-	// 						.locatorCompanyId(url)
-	// 						.then((cmpanyId: any) => {
-	// 							let billboardPayload =
-	// 								new ApiPayloads().getPayloadBillboardTermForUpc(
-	// 									dateStart,
-	// 									dateEnd,
-	// 									aUpc,
-	// 									cmpanyId
-	// 								);
-	// 							if (
-	// 								url ==
-	// 								'https://stg.walmartluminate.com/digitallandscapes/'
-	// 							) {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: billboardStg,
-	// 									headers: header,
-	// 									body: billboardPayload
-	// 								}).then((response: { body: any[] }) => {
-	// 									const sessionPdpViewRate =
-	// 										response.body.find(
-	// 											(item: { title: any }) =>
-	// 												item.title ===
-	// 												metricsToCheck
-	// 										);
-	// 									this.getBillboardMetrics().then(
-	// 										(metricsValue: { text: any }) => {
-	// 											expect(
-	// 												metricsValue.text
-	// 											).to.contain(
-	// 												sessionPdpViewRate.value
-	// 											);
-	// 										}
-	// 									);
-	// 								});
-	// 							} else if (
-	// 								url ==
-	// 								'https://www.walmartluminate.com/digitallandscapes/'
-	// 							) {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: billboardProd,
-	// 									headers: header,
-	// 									body: billboardPayload
-	// 								}).then((response: { body: any[] }) => {
-	// 									const sessionPdpViewRate =
-	// 										response.body.find(
-	// 											(item: { title: any }) =>
-	// 												item.title ===
-	// 												metricsToCheck
-	// 										);
-	// 									this.getBillboardMetrics().then(
-	// 										(metricsValue: { text: any }) => {
-	// 											expect(
-	// 												metricsValue.text
-	// 											).to.contain(
-	// 												sessionPdpViewRate.value
-	// 											);
-	// 										}
-	// 									);
-	// 								});
-	// 							} else {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: billboard,
-	// 									headers: header,
-	// 									body: billboardPayload
-	// 								}).then((response: { body: any[] }) => {
-	// 									const sessionPdpViewRate =
-	// 										response.body.find(
-	// 											(item: { title: any }) =>
-	// 												item.title ===
-	// 												metricsToCheck
-	// 										);
-	// 									this.getBillboardMetrics().then(
-	// 										(metricsValue: { text: any }) => {
-	// 											expect(
-	// 												metricsValue.text
-	// 											).to.contain(
-	// 												sessionPdpViewRate.value
-	// 											);
-	// 										}
-	// 									);
-	// 								});
-	// 							}
-	// 						});
-	// 				});
-	// 		}
-	// 	);
-	// }
+	async checkBillBoardDataUpc(
+		aUpc: string,
+		lastWeekNumberInList: string,
+		metricsToCheck: string,
+		menuPosition: string
+	) {
+		const dates = await this.datesFromFilter(lastWeekNumberInList);
+		const dateStart = dates.startreversedDateReceived;
+		const dateEnd = dates.endreversedDateReceived;
+
+		await this.clickWeekFilter(lastWeekNumberInList);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		await this.dateFilterApplyBtnClick();
+		await (await this.checkAndClickOnUpcBtn()).click();
+
+		await this.pasteUpcs(aUpc);
+		await (await this.ConfirmBtnUpc()).click();
+
+		// click on billboard menu button
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await (await this.clickBillBoardMenus(menuPosition)).click();
+		await (await this.clickBillBoardMenu(metricsToCheck)).click();
+
+		// Setting up intercept based on the URL
+		let url;
+		if (process.env.ENV === 'QA') {
+			url = billboardStg;
+		} else if (process.env.ENV === 'PROD') {
+			url = billboardProd;
+		} else {
+			url = billboard;
+		}
+
+		const cookieString = await this.getCookie();
+		const header = await this.getHeadersAndCookies(cookieString);
+
+		const cmpanyId = await this.getCompanyId();
+		const billboardPayload = this.getPayloadBillboardTermForUpc(
+			dateStart,
+			dateEnd,
+			aUpc,
+			cmpanyId
+		);
+
+		// Sending the request to fetch data
+		const response = await this.page.request.post(url, {
+			headers: header,
+			data: billboardPayload
+		});
+
+		const responseBody = await response.json();
+
+		const sessionPdpViewRate = responseBody.find(
+			(item: { title: any }) => item.title === metricsToCheck
+		);
+
+		expect(
+			await this.performanceElements
+				.getFullMetricsValueBillboard('1')
+				.allInnerTexts()
+		).toContain(sessionPdpViewRate.value);
+	}
 
 	// verifyToolTipMessage
-	// verifyToolTipMessage(minWaitTime: any) {
-	// 	this.performanceElements.dailyHoverText().trigger('mouseover');
-	// 	this.performanceElements
-	// 		.messageAfterHover({ timeout: minWaitTime })
-	// 		.should('be.visible');
-	// }
+	async verifyToolTipMessage() {
+		// Hover over the element
+		await this.performanceElements.dailyHoverText().hover();
+
+		// Wait for the tooltip to be visible
+		await this.performanceElements
+			.messageAfterHover()
+			.waitFor({ state: 'visible' });
+	}
 
 	// date text like Mar 09, 2024
 	async getDateFeomCalender(lastWeekNumberInList: string) {
@@ -1932,11 +1674,9 @@ class PerformancePage extends CommonClass {
 			url = dow;
 		}
 
-		const cookie = await this.page.context().cookies();
-		const luminationToken =
-			cookie.find((c) => c.name === 'LUMINATE_TOKEN')?.value ?? '';
+		const cookieString = await this.getCookie();
 
-		const header = await this.getHeadersAndCookies(luminationToken);
+		const header = await this.getHeadersAndCookies(cookieString);
 
 		categoryNbr = categoryNbr?.split(' ')[0];
 		let startDate = new Date(dateStart);
@@ -2041,11 +1781,9 @@ class PerformancePage extends CommonClass {
 			url = dow;
 		}
 
-		const cookie = await this.page.context().cookies();
-		const luminationToken =
-			cookie.find((c) => c.name === 'LUMINATE_TOKEN')?.value ?? '';
+		const cookieString = await this.getCookie();
 
-		const header = await this.getHeadersAndCookies(luminationToken);
+		const header = await this.getHeadersAndCookies(cookieString);
 
 		categoryNbr = categoryNbr?.split(' ')[0];
 		let startDate = new Date(dateStart);
