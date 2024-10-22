@@ -1,6 +1,7 @@
 import { expect, Page } from '@playwright/test';
 import PerformancePage from './performancePage';
 import { DEFAULT_TIMEOUT } from '../../config';
+import { sessionshare, sessionshareProd, sessionshareStg } from '../../shared/routes';
 
 class SessionSharePage {
 	page: Page;
@@ -15,7 +16,7 @@ class SessionSharePage {
 				'//div[@id="bar-chart-container"]//div[@role="tooltip"]'
 			),
 		legendsBelowBarChart: (legend: string) =>
-			this.page.locator(`//div[contains(@aria-label, '${legend}')]`),
+			this.page.locator(`//div[@id='bar-chart-container']//div[contains(@aria-label, '${legend}')]`),
 		sessionShareChart: () =>
 			this.page.locator('div[id="bar-chart-container"]'),
 		sessionSharePageText: (text: string) =>
@@ -178,13 +179,13 @@ class SessionSharePage {
 		// Trigger hover action on the bar chart
 		await this.page
 			.locator("//div[@id='bar-chart-container']//div[@role='button']")
-			.hover();
+			.hover({force: true});
 		await this.page
 			.locator("//div[@id='bar-chart-container']//div[@role='button']")
 			.click({ force: true });
 
 		// Log the hover action and trigger tooltip
-		await this.page.locator('#bar-chart-container').hover();
+		await this.page.locator('#bar-chart-container').hover({force: true});
 		const tooltipText = await this.page
 			.locator(
 				'#bar-chart-container .am5-tooltip-container div[role="tooltip"]'
@@ -197,7 +198,7 @@ class SessionSharePage {
 		// Interact with the alert and canvas elements
 		await this.page
 			.locator('//div[@id="bar-chart-container"]//div[@role="alert"]')
-			.hover();
+			.hover({force: true});
 		await this.page
 			.locator('//div[@id="bar-chart-container"]//div[@role="alert"]')
 			.click({ force: true });
@@ -205,7 +206,7 @@ class SessionSharePage {
 			.locator(
 				"//div[@id='bar-chart-container']//canvas[@class='am5-layer-30']"
 			)
-			.hover();
+			.hover({force: true});
 		await this.page
 			.locator(
 				"//div[@id='bar-chart-container']//canvas[@class='am5-layer-30']"
@@ -215,18 +216,16 @@ class SessionSharePage {
 		// API request interception logic based on environment
 		let apiEndpoint;
 		if (process.env.ENV === 'QA') {
-			apiEndpoint = 'sessionshareStg';
+			apiEndpoint = sessionshareStg;
 		} else if (process.env.ENV === 'PROD') {
-			apiEndpoint = 'sessionshareProd';
+			apiEndpoint = sessionshareProd;
 		} else {
-			apiEndpoint = 'sessionshare';
+			apiEndpoint = sessionshare;
 		}
 
 		// Get authentication token and set headers
-		const cookie = await this.page.context().cookies();
-		const luminationToken =
-			cookie.find((c) => c.name === 'LUMINATE_TOKEN')?.value || '';
-		const headers = await perfPage.getHeadersAndCookies(luminationToken);
+		const cookieString = await perfPage.getCookie();
+		const headers = await perfPage.getHeadersAndCookies(cookieString);
 
 		// Prepare the API payload
 		const ssPayload = perfPage.getPayloadBillboardTerm(
@@ -241,9 +240,8 @@ class SessionSharePage {
 			headers: headers,
 			data: ssPayload
 		});
-
 		const responseBody = await response.json();
-		const pdpSessionShareValue = responseBody[0].pdpSessionShare.toString();
+		const pdpSessionShareValue = responseBody[0].pdp_session_share.toString();
 
 		// Return the tooltip text and session share value
 		return {

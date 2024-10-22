@@ -169,7 +169,8 @@ class CommonClass {
 			companyIDs: [cmpanyIdReceived],
 			categories: [category],
 			brands: [],
-			upcs: []
+			upcs: [],
+			comparisonType: 'timePeriod'
 		};
 		return AreaPayloads;
 	}

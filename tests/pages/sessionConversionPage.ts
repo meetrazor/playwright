@@ -22,7 +22,7 @@ class SessionConversionPage {
 
 		// xpath of session conversion page
 		SessionOfConversionPageXpath: () =>
-			this.page.locator("//span[text()='Conversion']"),
+			this.page.locator("//div[@title='Conversion']//span"),
 
 		// xpath of redirection link
 		redirectToPageLink: (page: string) =>

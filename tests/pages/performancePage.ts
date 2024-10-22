@@ -183,6 +183,7 @@ class PerformancePage extends CommonClass {
 			this.page.locator(
 				"//div[contains(@class, 'HierarchySelector-module_selectionItemList__rsWHN')]/div[1]//*[local-name()='svg']"
 			),
+		selectCustomCategory :(index:number)=>this.page.locator("//div[contains(@class, 'HierarchySelector-module_selectionItemList__rsWHN')]/div["+index+"]//button"),
 
 		// xpath of categort hirarchy popup
 		categoryHirarchyDialogue: () =>
@@ -319,11 +320,7 @@ class PerformancePage extends CommonClass {
 
 		// xpath of legends below hod or dow filter
 		legendBelowHODDOWFilter: (filter: string) =>
-			this.page.locator(
-				"#hourly-daily-trend .am5-focus-container div[aria-label*='" +
-					filter +
-					"']"
-			),
+			this.page.locator(`//div[@id='hourly-daily-trend']//div[contains(@aria-label, '${filter}')]`),
 
 		// xpath for hod Chart link
 		hodChartLink: () =>
@@ -353,7 +350,7 @@ class PerformancePage extends CommonClass {
 		// paste a upc area
 		upcPaste: () =>
 			this.page.locator(
-				'//input[contains(@placeholder,"Copy & paste a list")]'
+				"//input[@type='text']"
 			),
 		// xpath of pasted upc
 		pastedUpc: (aUpc: string) =>
@@ -377,6 +374,8 @@ class PerformancePage extends CommonClass {
 
 		// xpath to check error message
 		upcErrMsg: (filter: string) =>
+			this.page.locator("//p[text()='" + filter + "']"),
+		upcErrMsgWithLink: (filter: string) =>
 			this.page.locator("//div[text()='" + filter + "']"),
 
 		// xpath of clear upc btn
@@ -974,18 +973,32 @@ class PerformancePage extends CommonClass {
 		await this.dateFilterIcon().click();
 		//click on last week
 		await this.clickWeekNumbersList(lastWeekNumberInList).click();
-		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		await this.dateFilterApplyBtnClick();
 		await (await this.verifyDeptAndCatFilter()).click();
 		await (await this.checkUncheckADepartment(1)).click();
-		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT)
 		await (await this.checkUncheckADepartment(1)).click();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+	}
+
+
+	async selectDateAndCustomCategory(lastWeekNumberInList: string,department:number,category:number) {
+		await this.dateFilterIcon().click();
+		//click on last week
+		await this.clickWeekNumbersList(lastWeekNumberInList).click();
+		await this.dateFilterApplyBtnClick();
+		await (await this.verifyDeptAndCatFilter()).click();
+		await (await this.checkUncheckADepartment(department)).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT)
+		await (await this.checkUncheckADepartment(department)).click();
+		await (this.performanceElements.selectCustomCategory(category)).click();
 		await this.page.locator('button', { hasText: 'Confirm' }).click();
 	}
 
 	// get category selected and verify from dept and category filter that selected category is applied correctly
 	async checkSelectedCategoryIsApplied(categoryNum: string) {
 		await (await this.verifyDeptAndCatFilter()).click();
+		
 		const text = await this.performanceElements
 			.categorySelectedFromFilter(categoryNum)
 			.innerText();
@@ -1136,6 +1149,12 @@ class PerformancePage extends CommonClass {
 			.innerText();
 		return { text };
 	}
+	async getFullBillboardMetrics() {
+		const text = await this.performanceElements
+			.getFullMetricsValueBillboard('1')
+			.allTextContents();
+		return { text };
+	}
 
 	// // get second metrics value from billboard
 	async getSecondBillboardMetrics() {
@@ -1206,7 +1225,7 @@ class PerformancePage extends CommonClass {
 		await this.page.locator('button', { hasText: 'Confirm' }).click();
 		await (await this.clickBillBoardMenus(menuPosition)).click();
 		await (await this.clickBillBoardMenu(metricsToCheck)).click();
-		const metricsValue = await this.getBillboardMetrics();
+		const metricsValue = await this.getFullBillboardMetrics();
 		const metrics = await this.getMetricsValueForConversionFromchart(
 			metricsPositionInConversionChart
 		);
@@ -1358,13 +1377,18 @@ class PerformancePage extends CommonClass {
 		await (await this.checkAndClickOnUpcBtn()).click();
 
 		const searchInput = this.performanceElements.upcPaste();
-		await searchInput.fill(aUpc); // Fill the input field with the UPC
-		await searchInput.press('Enter'); // Simulate pressing Enter
+		await searchInput.click();
+		await this.page.keyboard.type(aUpc,{delay:50});
+		await this.page.keyboard.press('Enter');
+		// await searchInput.fill(aUpc); // Fill the input field with the UPC
+		// await searchInput.press('Enter'); // Simulate pressing Enter
 	}
 
 	// paste upcs text box
 	async pasteUpcTextArea(Upcs: any) {
 		const search = await this.performanceElements.upcPasteArea();
+
+		await search.click();
 		await search.fill(Upcs);
 		await search.press('Enter');
 	}
@@ -1392,6 +1416,10 @@ class PerformancePage extends CommonClass {
 	// to check upc error message and remove all error button
 	async verifyErrorMessgae(filter: any) {
 		return this.performanceElements.upcErrMsg(filter);
+	}
+
+	async verifyErrorMessgaeWithLink(filter: any) {
+		return this.performanceElements.upcErrMsgWithLink(filter);
 	}
 
 	// clear upc
@@ -1638,14 +1666,16 @@ class PerformancePage extends CommonClass {
 		await (await this.verifyDeptAndCatFilter()).click();
 		await (await this.checkUncheckADepartment(1)).click();
 		await (await this.checkUncheckADepartment(1)).click();
+		await (await this.performanceElements.selectCustomCategory(2)).click();
 		await this.page.locator('button', { hasText: 'Confirm' }).click();
 		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 
-		const category = await this.checkSelectedCategoryIsApplied('1');
+		const category = await this.checkSelectedCategoryIsApplied('2');
 		await (await this.verifyDeptAndCatFilter()).click();
 
 		const departNum = await this.getDepartmentNumber();
 		await this.page.locator('button', { hasText: 'Confirm' }).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 
 		const cmpanyIdReceived = await this.getCompanyId();
 
@@ -1655,14 +1685,15 @@ class PerformancePage extends CommonClass {
 		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 
 		const tooltipButton = this.page.locator(
-			"//div[@id='hourly-daily-trend']//div[@role='button']"
+			"//div[@id='hourly-daily-trend']"
 		);
-		await tooltipButton.hover();
+		const box = await tooltipButton.boundingBox();
+		await tooltipButton.hover({force: true});	
 		await tooltipButton.click({ force: true });
 
 		const tooltipContainer = this.page.locator(
 			'#hourly-daily-trend .am5-tooltip-container div[role="tooltip"]'
-		);
+		).first();
 		await tooltipContainer.waitFor();
 		const tooltipText = (await tooltipContainer.innerText()).trim();
 		let url;
@@ -1702,18 +1733,17 @@ class PerformancePage extends CommonClass {
 			headers: header,
 			data: AreaPayload
 		});
-
+		
 		tooltipDay = hodOrDow.includes('hod')
 			? tooltipText.substring(0, 2)
 			: tooltipText.substring(0, 3);
 
 		const jsonResponse = await response.json();
-
 		const pdpCount = jsonResponse.find(
 			(item: any) => item.position === tooltipDay
 		);
 
-		let ValuePdpCount = pdpCount.pdpViewCount.toString();
+		let ValuePdpCount = pdpCount.pdp_view_count.toString();
 
 		return {
 			tooltipText: tooltipText.replace(',', ''),
@@ -1742,16 +1772,17 @@ class PerformancePage extends CommonClass {
 		await (await this.verifyDeptAndCatFilter()).click();
 		await (await this.checkUncheckADepartment(1)).click();
 		await (await this.checkUncheckADepartment(1)).click();
+		await (await this.performanceElements.selectCustomCategory(2)).click();
 		await this.page.locator('button', { hasText: 'Confirm' }).click();
 		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 
 		// Get text of category selected and verify that the category is selected
-		const category = await this.checkSelectedCategoryIsApplied('1');
+		const category = await this.checkSelectedCategoryIsApplied('2');
 		await (await this.verifyDeptAndCatFilter()).click();
 
 		const departNum = await this.getDepartmentNumber();
 		await this.page.locator('button', { hasText: 'Confirm' }).click();
-
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		const cmpanyIdReceived = await this.getCompanyId();
 
 		let categoryNbr = category.text;
@@ -1760,15 +1791,15 @@ class PerformancePage extends CommonClass {
 		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 
 		const tooltipButton = this.page.locator(
-			"//div[@id='hourly-daily-trend']//div[@role='button']"
+			"//div[@id='hourly-daily-trend']"
 		);
-		await tooltipButton.hover();
+		const box = await tooltipButton.boundingBox();
+		await tooltipButton.hover({force: true});	
 		await tooltipButton.click({ force: true });
-		console.log('Hover action triggered');
 
 		const tooltipContainer = this.page.locator(
 			'#hourly-daily-trend .am5-tooltip-container div[role="tooltip"]'
-		);
+		).first();
 		await tooltipContainer.waitFor();
 		let tooltipText = (await tooltipContainer.innerText()).trim();
 
@@ -1819,7 +1850,8 @@ class PerformancePage extends CommonClass {
 		const AvgValuePdpViewCount = jsonResponse.find(
 			(item: any) => item.position === tooltipDay
 		);
-		let AvgValuePdpCount = AvgValuePdpViewCount.avgPdpViewCount.toString();
+	
+		let AvgValuePdpCount = AvgValuePdpViewCount.avg_pdp_view_count.toString();
 
 		tooltipText = tooltipText.replace(',', '');
 
