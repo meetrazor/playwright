@@ -1,7 +1,18 @@
 import { expect, Page } from '@playwright/test';
 import PerformancePage from './performancePage';
 import { DEFAULT_TIMEOUT } from '../../config';
-import { sessionshare, sessionshareProd, sessionshareStg } from '../../shared/routes';
+import {
+	line,
+	lineProd,
+	lineStg,
+	sessionshare,
+	sessionshareProd,
+	sessionshareStg,
+	table,
+	tableProd,
+	tableStg
+} from '../../shared/routes';
+import performancePage from './performancePage';
 
 class SessionSharePage {
 	page: Page;
@@ -16,7 +27,9 @@ class SessionSharePage {
 				'//div[@id="bar-chart-container"]//div[@role="tooltip"]'
 			),
 		legendsBelowBarChart: (legend: string) =>
-			this.page.locator(`//div[@id='bar-chart-container']//div[contains(@aria-label, '${legend}')]`),
+			this.page.locator(
+				`//div[@id='bar-chart-container']//div[contains(@aria-label, '${legend}')]`
+			),
 		sessionShareChart: () =>
 			this.page.locator('div[id="bar-chart-container"]'),
 		sessionSharePageText: (text: string) =>
@@ -108,17 +121,17 @@ class SessionSharePage {
 		return this.sessionSharePageElements.sessionShareDropdown(filter);
 	}
 
-	async verifyToolTipMessage(minWaitTime: number) {
+	async verifyToolTipMessage() {
 		await this.sessionSharePageElements.sessionHoverText().hover();
-		await this.page.waitForTimeout(minWaitTime);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		await expect(
 			this.sessionSharePageElements.messageAfterHover()
 		).toBeVisible();
 	}
 
-	async verifyShareTrendToolTipMessage(minWaitTime: number) {
+	async verifyShareTrendToolTipMessage() {
 		await this.sessionSharePageElements.sessionTrendHoverText().hover();
-		await this.page.waitForTimeout(minWaitTime);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		await expect(
 			this.sessionSharePageElements.trendMessageAfterHover()
 		).toBeVisible();
@@ -179,13 +192,13 @@ class SessionSharePage {
 		// Trigger hover action on the bar chart
 		await this.page
 			.locator("//div[@id='bar-chart-container']//div[@role='button']")
-			.hover({force: true});
+			.hover({ force: true });
 		await this.page
 			.locator("//div[@id='bar-chart-container']//div[@role='button']")
 			.click({ force: true });
 
 		// Log the hover action and trigger tooltip
-		await this.page.locator('#bar-chart-container').hover({force: true});
+		await this.page.locator('#bar-chart-container').hover({ force: true });
 		const tooltipText = await this.page
 			.locator(
 				'#bar-chart-container .am5-tooltip-container div[role="tooltip"]'
@@ -198,7 +211,7 @@ class SessionSharePage {
 		// Interact with the alert and canvas elements
 		await this.page
 			.locator('//div[@id="bar-chart-container"]//div[@role="alert"]')
-			.hover({force: true});
+			.hover({ force: true });
 		await this.page
 			.locator('//div[@id="bar-chart-container"]//div[@role="alert"]')
 			.click({ force: true });
@@ -206,7 +219,7 @@ class SessionSharePage {
 			.locator(
 				"//div[@id='bar-chart-container']//canvas[@class='am5-layer-30']"
 			)
-			.hover({force: true});
+			.hover({ force: true });
 		await this.page
 			.locator(
 				"//div[@id='bar-chart-container']//canvas[@class='am5-layer-30']"
@@ -241,7 +254,8 @@ class SessionSharePage {
 			data: ssPayload
 		});
 		const responseBody = await response.json();
-		const pdpSessionShareValue = responseBody[0].pdp_session_share.toString();
+		const pdpSessionShareValue =
+			responseBody[0].pdp_session_share.toString();
 
 		// Return the tooltip text and session share value
 		return {
@@ -251,16 +265,7 @@ class SessionSharePage {
 	}
 
 	// FIXME
-	// async checkTooltipsWithApi(lastWeekNumberInList: string) {
-	// 	const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
-	// 	const dateStart = dates.startreversedDateReceived;
-	// 	const dateEnd = dates.endreversedDateReceived;
-	// 	await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
-	// 	await this.page.waitForTimeout(minWaitTime);
-	// 	await perfPage.dateFilterApplyBtnClick();
 
-	// 	//... remaining logic to handle the API request and tooltip interaction.
-	// }
 	//verify tooltip for session conversion chart
 	// checkTooltipSessionShareChart(
 	// 	url,
@@ -500,46 +505,134 @@ class SessionSharePage {
 	// 			});
 	// 		});
 	// }
+	async checkTooltipSessionShareChart(
+		lastWeekNumberInList: string,
+		intervalSrc: string
+	) {
+		let tooltipDay: string;
+		let interval: string;
+		const perfPage = new PerformancePage(this.page);
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		let dateStart = dates.startreversedDateReceived;
+		let dateEnd = dates.endreversedDateReceived;
 
-	// verifyTableHeaders(filter) {
-	// 	cy.get('table.w_GQ thead th').should(($headers) => {
-	// 		// Extract the text content of the headers
-	// 		const headerTexts = $headers
-	// 			.map((index, header) => Cypress.$(header).text())
-	// 			.get();
-	// 		// Define the expected text values
-	// 		if (filter === 'Item') {
-	// 			let expectedTexts = [
-	// 				filter,
-	// 				'Description',
-	// 				'Change vs Prev Time Period',
-	// 				'PDP View Session Share',
-	// 				'Change vs Prev Time Period',
-	// 				'Add to Cart Session Share',
-	// 				'Change vs Prev Time Period',
-	// 				'Purchase Session Share'
-	// 			];
-	// 			expect(headerTexts).to.deep.equal(expectedTexts);
-	// 		} else {
-	// 			const expectedTexts = [
-	// 				filter,
-	// 				'Change vs Prev Time Period',
-	// 				'PDP View Session Share',
-	// 				'Change vs Prev Time Period',
-	// 				'Add to Cart Session Share',
-	// 				'Change vs Prev Time Period',
-	// 				'Purchase Session Share'
-	// 			];
-	// 			// Check if the expected text values are present in the headers
-	// 			expect(headerTexts).to.deep.equal(expectedTexts);
-	// 		}
-	// 	});
-	// }
+		await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await perfPage.dateFilterApplyBtnClick();
+
+		const category = await perfPage.checkSelectedCategoryIsApplied('1');
+		await perfPage.verifyDeptAndCatFilter();
+		const departNum = await perfPage.getDepartmentNumber();
+
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+
+		const cmpanyId = await perfPage.getCompanyId();
+		let compnyId = cmpanyId;
+		let categoryNbr = category.convertedText.trim().split(' ')[0];
+		let dNum = departNum.numberExtracted;
+
+		await perfPage.seeDetailsLinkSessionShareChart();
+		await this.dlyWklyDrpDwnFromSessnShareTrendChart();
+		await this.dailyWeeklyFromSessionShareTrend('Daily');
+
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		await this.page
+			.locator('#csos-trend .am5-tooltip-container')
+			.first()
+			.hover({ force: true });
+		await this.page
+			.locator('#csos-trend .am5-tooltip-container')
+			.first()
+			.click({ force: true });
+
+		const tooltips = await this.page
+			.locator('#csos-trend .am5-tooltip-container')
+			.all();
+
+		const cookieString = await perfPage.getCookie();
+		const header = await perfPage.getHeadersAndCookies(cookieString);
+
+		for (const [index, tooltipContainer] of tooltips.entries()) {
+			const tooltipText = await tooltipContainer
+				.locator('[role="tooltip"]')
+				.nth(index)
+				.innerText();
+			await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+			tooltipDay = tooltipText.substring(0, 6);
+			interval = intervalSrc.includes('Daily') ? 'Daily' : 'Weekly';
+
+			const linePayload = perfPage.getLinePayloadForCategory(
+				dateStart,
+				dateEnd,
+				`${dNum}_${categoryNbr}`,
+				interval,
+				compnyId
+			);
+
+			let lineUrl = '';
+			if (process.env.ENV === 'QA') {
+				lineUrl = lineStg;
+			} else if (process.env.ENV === 'PROD') {
+				lineUrl = lineProd;
+			} else {
+				lineUrl = line;
+			}
+
+			const response = await this.page.request.post(lineUrl, {
+				headers: header,
+				data: linePayload
+			});
+
+			const responseBody = await response.json();
+			const sessionSharePdpValue = responseBody.find(
+				(item: any) => item.position === tooltipDay
+			);
+
+			let sessionSharePdpViewValueReceived =
+				sessionSharePdpValue.pdpSessionShare.toString();
+			let tooltipValue = tooltipText.toString().replace(',', '');
+
+			expect(tooltipValue).toContain(sessionSharePdpViewValueReceived);
+		}
+	}
+
+	async verifyTableHeaders(filter: string) {
+		const headers = await this.page.$$eval('table.w_GQ thead th', (ths) =>
+			ths.map((th) => th?.textContent?.trim())
+		);
+
+		if (filter === 'Item') {
+			const expectedTexts = [
+				filter,
+				'Description',
+				'Change vs Prev Time Period',
+				'PDP View Session Share',
+				'Change vs Prev Time Period',
+				'Add to Cart Session Share',
+				'Change vs Prev Time Period',
+				'Purchase Session Share'
+			];
+			expect(headers).toEqual(expectedTexts);
+		} else {
+			const expectedTexts = [
+				filter,
+				'Change vs Prev Time Period',
+				'PDP View Session Share',
+				'Change vs Prev Time Period',
+				'Add to Cart Session Share',
+				'Change vs Prev Time Period',
+				'Purchase Session Share'
+			];
+			expect(headers).toEqual(expectedTexts);
+		}
+	}
 
 	// // no data in table when category/brand selected for upc
-	// noDataTextTable() {
-	// 	this.sessionSharePageElements.noDataInTable();
-	// }
+	noDataTextTable() {
+		this.sessionSharePageElements.noDataInTable();
+	}
 
 	async getTableLabelValue(cellNumber: string) {
 		const text = await this.sessionSharePageElements
@@ -577,116 +670,124 @@ class SessionSharePage {
 		expect(buttons).toContain('Item');
 	}
 	// FIXME:
-	// async verifySessionShareTableWithApi(
-	// 	url,
-	// 	lastWeekNumberInList,
-	// 	minWaitTime
-	// ) {
-	// 	const dates = await perfPage.datesFromFilter(
-	// 		lastWeekNumberInList,
-	// 		minWaitTime
-	// 	);
-	// 	const dateStart = dates.startreversedDateReceived;
-	// 	const dateEnd = dates.endreversedDateReceived;
+	async verifySessionShareTableWithApi(lastWeekNumberInList: string) {
+		const perfPage = new performancePage(this.page);
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		const dateStart = dates.startreversedDateReceived;
+		const dateEnd = dates.endreversedDateReceived;
 
-	// 	//... remaining logic to handle the API request and table data verification.
-	// }
-	// verifyTableDataWithAPI(url, lastWeekNumberInList, minWaitTime, aUpc) {
-	// 	perfPage
-	// 		.datesFromFilter(lastWeekNumberInList, minWaitTime)
-	// 		.then((dates) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			perfPage.clickWeekFilter(lastWeekNumberInList);
-	// 			cy.wait(minWaitTime);
-	// 			perfPage.dateFilterApplyBtnClick();
-	// 			perfPage
-	// 				.checkAndClickOnUpcBtn()
-	// 				.click({ timeout: minWaitTime });
-	// 			perfPage.pasteUpcs(aUpc);
-	// 			perfPage.ConfirmBtnUpc().click();
-	// 			cy.wait(minWaitTime);
-	// 			perfPage
-	// 				.seeDetailsLinkSessionShareChart({ timeout: minWaitTime })
-	// 				.click();
-	// 			this.tableFilterButton().click();
-	// 			this.SelectFilterInTable('Item', { timeout: minWaitTime })
-	// 				.should('be.visible')
-	// 				.click();
-	// 			//click on billboard menu button
-	// 			cy.wait(minWaitTime);
-	// 			if (
-	// 				url == 'https://stg.walmartluminate.com/digitallandscapes/'
-	// 			) {
-	// 				cy.intercept(tableStg).as('table');
-	// 			} else {
-	// 				cy.intercept(table).as('table');
-	// 			}
-	// 			cy.getCompanyId(url).then((cmpanyId) => {
-	// 				let compnyId = cmpanyId;
-	// 				cy.getCookie('LUMINATE_TOKEN').then((cookie) => {
-	// 					const luminationToken = cookie ? cookie.value : null;
-	// 					let header = new ApiHeaders().getHeadersAndCookies(
-	// 						url,
-	// 						luminationToken
-	// 					);
-	// 					let tablePayload =
-	// 						new ApiPayloads().getTablePayloadForUpc(
-	// 							dateStart,
-	// 							dateEnd,
-	// 							aUpc,
-	// 							compnyId
-	// 						);
-	// 					if (
-	// 						url ==
-	// 						'https://stg.walmartluminate.com/digitallandscapes/'
-	// 					) {
-	// 						cy.request({
-	// 							method: 'POST',
-	// 							url: tableStg,
-	// 							headers: header,
-	// 							body: tablePayload
-	// 						}).then((response) => {
-	// 							const responseBody = response.body;
-	// 							let pdpSessionShare =
-	// 								responseBody[0].pdpSessionShare;
-	// 							if (pdpSessionShare === 0) {
-	// 								pdpSessionShare = '-';
-	// 							}
-	// 							this.getTableDataValue(4).then(
-	// 								(metricsValue) => {
-	// 									expect(metricsValue.text).to.contain(
-	// 										pdpSessionShare
-	// 									);
-	// 								}
-	// 							);
-	// 						});
-	// 					} else {
-	// 						cy.request({
-	// 							method: 'POST',
-	// 							url: table,
-	// 							headers: header,
-	// 							body: tablePayload
-	// 						}).then((response) => {
-	// 							const responseBody = response.body;
-	// 							let pdpSessionShare =
-	// 								responseBody[0].pdpSessionShare;
-	// 							if (pdpSessionShare === 0) {
-	// 								pdpSessionShare = '-';
-	// 							}
-	// 							this.getTableDataValue(4).then(
-	// 								(metricsValue) => {
-	// 									expect(metricsValue.text).to.contain(
-	// 										pdpSessionShare
-	// 									);
-	// 								}
-	// 							);
-	// 						});
-	// 					}
-	// 				});
-	// 			});
-	// 		});
-	// }
+		await perfPage.clickWeekFilter(lastWeekNumberInList);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		await perfPage.dateFilterApplyBtnClick();
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await (await perfPage.checkUncheckADepartment(1)).click();
+
+		await this.page.locator('button:has-text("Confirm")').click();
+
+		const category = await perfPage.checkSelectedCategoryIsApplied('1');
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+
+		const departNum = await perfPage.getDepartmentNumber();
+		await this.page.locator('button:has-text("Confirm")').click();
+
+		const cmpanyId = await perfPage.getCompanyId();
+		const dNum = departNum.numberExtracted;
+		let categoryNbr = category?.text?.split(' ')[0];
+
+		await (await perfPage.seeDetailsLinkSessionShareChart()).click();
+
+		let tableUrl = '';
+		if (process.env.ENV === 'QA') {
+			tableUrl = tableStg;
+		} else if (process.env.ENV === 'PROD') {
+			tableUrl = tableProd;
+		} else {
+			tableUrl = table;
+		}
+
+		const cookieString = await perfPage.getCookie();
+
+		const header = await perfPage.getHeadersAndCookies(cookieString);
+		const tablePayload = perfPage.getPayloadTable(
+			dateStart,
+			dateEnd,
+			`${dNum}_${categoryNbr}`,
+			cmpanyId
+		);
+
+		const response = await this.page.request.post(tableUrl, {
+			headers: header,
+			data: tablePayload
+		});
+
+		const responseBody = await response.json();
+		let pdpSessionShare = responseBody[0].pdpSessionShare;
+		if (pdpSessionShare === 0) {
+			pdpSessionShare = '-';
+		}
+
+		const metricsValue = await this.getTableDataValue('3');
+		expect(metricsValue.text).toContain(pdpSessionShare);
+	}
+	async verifyTableDataWithAPI(lastWeekNumberInList: string, aUpc: string) {
+		const perfPage = new performancePage(this.page);
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		const dateStart = dates.startreversedDateReceived;
+		const dateEnd = dates.endreversedDateReceived;
+
+		await perfPage.clickWeekFilter(lastWeekNumberInList);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		await perfPage.dateFilterApplyBtnClick();
+		await (await perfPage.checkAndClickOnUpcBtn()).click();
+		await perfPage.pasteUpcs(aUpc);
+		await (await perfPage.ConfirmBtnUpc()).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		await (await perfPage.seeDetailsLinkSessionShareChart()).click();
+		await (await this.tableFilterButton()).click();
+		await (await this.SelectFilterInTable('Item')).click();
+
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		let tableUrl = '';
+		if (process.env.ENV === 'QA') {
+			tableUrl = tableStg;
+		} else if (process.env.ENV === 'PROD') {
+			tableUrl = tableProd;
+		} else {
+			tableUrl = table;
+		}
+
+		const cmpanyId = await perfPage.getCompanyId();
+		const cookieString = await perfPage.getCookie();
+
+		const header = await perfPage.getHeadersAndCookies(cookieString);
+		const tablePayload = perfPage.getTablePayloadForUpc(
+			dateStart,
+			dateEnd,
+			aUpc,
+			cmpanyId
+		);
+
+		const response = await this.page.request.post(tableUrl, {
+			headers: header,
+			data: tablePayload
+		});
+
+		const responseBody = await response.json();
+		let pdpSessionShare = responseBody[0].pdpSessionShare;
+		if (pdpSessionShare === 0) {
+			pdpSessionShare = '-';
+		}
+
+		const metricsValue = await this.getTableDataValue('4');
+		expect(metricsValue.text).toContain(pdpSessionShare);
+	}
 
 	async getTableDataValue(cellNumber: string) {
 		const text = await this.sessionSharePageElements

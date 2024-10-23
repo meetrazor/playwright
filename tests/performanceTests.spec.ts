@@ -688,7 +688,11 @@ test.describe(
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(donutChart);
-			await perfPage.selectDateAndCustomCategory(last4WeekNumberInList,1,2);
+			await perfPage.selectDateAndCustomCategory(
+				last4WeekNumberInList,
+				1,
+				2
+			);
 			await perfPage.checkSelectedCategoryIsApplied(
 				categoryNum2.toString()
 			);
@@ -749,7 +753,11 @@ test.describe(
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(donutChart);
-			await perfPage.selectDateAndCustomCategory(lastWeekNumberInList,1,2);
+			await perfPage.selectDateAndCustomCategory(
+				lastWeekNumberInList,
+				1,
+				2
+			);
 			await perfPage.checkSelectedCategoryIsApplied(
 				categoryNum2.toString()
 			);
@@ -778,7 +786,11 @@ test.describe(
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(donutChart);
-			await perfPage.selectDateAndCustomCategory(lastWeekNumberInList,1,2);
+			await perfPage.selectDateAndCustomCategory(
+				lastWeekNumberInList,
+				1,
+				2
+			);
 			await perfPage.checkSelectedCategoryIsApplied(
 				categoryNum2.toString()
 			);
@@ -853,7 +865,11 @@ test.describe(
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(sessionShare);
-			await perfPage.selectDateAndCustomCategory(lastWeekNumberInList,1,2);
+			await perfPage.selectDateAndCustomCategory(
+				lastWeekNumberInList,
+				1,
+				2
+			);
 			await (await perfPage.sessionshareChartPresence()).click();
 			await expect(
 				await perfPage.sessionShareDropdown('PDP views')
@@ -910,7 +926,11 @@ test.describe(
 			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(aria);
 
-			await perfPage.selectDateAndCustomCategory(last4WeekNumberInList,1,2);
+			await perfPage.selectDateAndCustomCategory(
+				last4WeekNumberInList,
+				1,
+				2
+			);
 			await expect(
 				await perfPage.verifyvisibilityDayOfTheWeekChart()
 			).toBeVisible();
@@ -929,7 +949,11 @@ test.describe(
 			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(aria);
 
-			await perfPage.selectDateAndCustomCategory(lastWeekNumberInList,1,2);
+			await perfPage.selectDateAndCustomCategory(
+				lastWeekNumberInList,
+				1,
+				2
+			);
 			await expect(
 				await perfPage.verifyvisibilityOfHODorDOWFilter('Daily Traffic')
 			).toBeVisible();
@@ -953,7 +977,7 @@ test.describe(
 			await (await perfPage.verifyDeptAndCatFilter()).click();
 			await (await perfPage.checkUncheckADepartment(1)).click();
 			await (await perfPage.checkUncheckADepartment(1)).click();
-			await (perfPage.performanceElements.selectCustomCategory(2)).click();
+			await perfPage.performanceElements.selectCustomCategory(2).click();
 			await page.locator('button', { hasText: 'Confirm' }).click();
 			await (
 				await perfPage.verifyvisibilityOfHODorDOWFilter('Daily Traffic')
@@ -976,7 +1000,7 @@ test.describe(
 			await (await perfPage.verifyDeptAndCatFilter()).click();
 			await (await perfPage.checkUncheckADepartment(1)).click();
 			await (await perfPage.checkUncheckADepartment(1)).click();
-			await (perfPage.performanceElements.selectCustomCategory(2)).click();
+			await perfPage.performanceElements.selectCustomCategory(2).click();
 			await page.locator('button', { hasText: 'Confirm' }).click();
 			await expect(
 				await perfPage.pageAtcPurchaseSelectionFiltr('PDP views')
@@ -1005,7 +1029,7 @@ test.describe(
 			await (await perfPage.verifyDeptAndCatFilter()).click();
 			await (await perfPage.checkUncheckADepartment(1)).click();
 			await (await perfPage.checkUncheckADepartment(1)).click();
-			await (perfPage.performanceElements.selectCustomCategory(2)).click();
+			await perfPage.performanceElements.selectCustomCategory(2).click();
 			await (
 				await perfPage.pageAtcPurchaseSelectionFiltr('PDP views')
 			).click();
@@ -1054,7 +1078,11 @@ test.describe(
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(billboard);
-			await perfPage.selectDateAndCustomCategory(lastWeekNumberInList,1,2);
+			await perfPage.selectDateAndCustomCategory(
+				lastWeekNumberInList,
+				1,
+				2
+			);
 			await (await perfPage.clickDOWHODFilterMenus()).click();
 			await perfPage.checkMenuButtonLabelsForHODAndDOW();
 		});
@@ -1064,7 +1092,11 @@ test.describe(
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(billboard);
-			await perfPage.selectDateAndCustomCategory(lastWeekNumberInList,1,2);
+			await perfPage.selectDateAndCustomCategory(
+				lastWeekNumberInList,
+				1,
+				2
+			);
 			await expect(
 				perfPage.performanceElements.legendBelowHODDOWFilter(
 					'PDP views'
@@ -1089,7 +1121,11 @@ test.describe.skip(
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(aria);
-			await perfPage.selectDateAndCustomCategory(lastWeekNumberInList,1,2);
+			await perfPage.selectDateAndCustomCategory(
+				lastWeekNumberInList,
+				1,
+				2
+			);
 			await perfPage.verifyvisibilityDayOfTheWeekChart();
 			await (await perfPage.hodLink()).click();
 		});
@@ -1243,11 +1279,15 @@ test.describe(
 			).toBeVisible();
 
 			await expect(
-				await perfPage.verifyErrorMessgaeWithLink('Remove invalid values')
+				await perfPage.verifyErrorMessgaeWithLink(
+					'Remove invalid values'
+				)
 			).toBeVisible();
 
 			await (
-				await perfPage.verifyErrorMessgaeWithLink('Remove invalid values')
+				await perfPage.verifyErrorMessgaeWithLink(
+					'Remove invalid values'
+				)
 			).click();
 			await expect(
 				perfPage.performanceElements.pastedUpc('234321')
@@ -1289,7 +1329,7 @@ test.describe(
 			}
 
 			await (await perfPage.ConfirmBtnUpc()).click();
-				
+
 			await expect(
 				await perfPage.categoryDisabledFilter()
 			).not.toBeVisible();
@@ -1306,13 +1346,15 @@ test.describe(
 			await perfPage.pasteUpcs('234321');
 			await (await perfPage.ConfirmBtnUpc()).click();
 			await (
-				await perfPage.verifyErrorMessgaeWithLink('Remove invalid values')
+				await perfPage.verifyErrorMessgaeWithLink(
+					'Remove invalid values'
+				)
 			).click();
 			await page.waitForTimeout(DEFAULT_TIMEOUT);
-			
+
 			const searchInput = await perfPage.performanceElements.upcPaste();
-			await searchInput.focus()
-			await page.keyboard.type('234321',{delay:50});
+			await searchInput.focus();
+			await page.keyboard.type('234321', { delay: 50 });
 			await page.keyboard.press('Enter');
 			await expect(
 				await perfPage.confirmButtonDisabled()
