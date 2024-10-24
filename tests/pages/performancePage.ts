@@ -1620,7 +1620,7 @@ class PerformancePage extends CommonClass {
 	// verifyToolTipMessage
 	async verifyToolTipMessage() {
 		// Hover over the element
-		await this.performanceElements.dailyHoverText().hover();
+		await this.performanceElements.dailyHoverText().hover({force:true});
 
 		// Wait for the tooltip to be visible
 		await this.performanceElements

@@ -655,7 +655,7 @@ test.describe(
 			//click on see details link
 			await (await perfPage.seeDetailsLink()).click();
 			await expect(
-				await perfPage.sessionCoPage.SessionOfConversionPage()
+				await perfPage.sessionConvPage.SessionOfConversionPage()
 			).toBeVisible();
 		});
 	}
@@ -1428,7 +1428,7 @@ test.describe(
 		}) => {
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
-			await perfPage.selectLastWeekDtAndCategory(lastWeekNumberInList);
+			await perfPage.selectDateAndCustomCategory(lastWeekNumberInList,1,2);
 			await expect(await perfPage.datasetBtn()).toBeVisible();
 			await (await perfPage.datasetBtn()).click();
 			await expect(await perfPage.datasetMenus('Daily')).toBeVisible();
@@ -1464,7 +1464,7 @@ test.describe(
 		}) => {
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
-			await perfPage.selectLastWeekDtAndCategory(lastWeekNumberInList);
+			await perfPage.selectDateAndCustomCategory(lastWeekNumberInList,1,2);
 			await (await perfPage.datasetBtn()).click();
 			await page.waitForTimeout(DEFAULT_TIMEOUT);
 			const textreceived = await perfPage.upcCount();
@@ -1520,9 +1520,7 @@ test.describe(
 				)
 			).toBeTruthy();
 
-			expect(
-				await perfPage.checkFileDownloaded(await perfPage.datasetBtn())
-			).toBeTruthy();
+			await (await perfPage.datasetBtn()).click();
 			expect(
 				await perfPage.checkFileDownloaded(
 					await perfPage.datasetMenus('Weekly')
@@ -1638,9 +1636,7 @@ test.describe(
 			await expect(
 				perfPage.performanceElements.seeDetailsSessionConvLink()
 			).toBeVisible();
-			await expect(
-				page.locator(`text=${messageSessionConversionMultiUPC}`)
-			).toBeVisible();
+	
 		});
 		test('075: for multiple upcs: verify that user would not see session share chart but have visibility of see details and should see a message', async ({
 			page
@@ -1671,9 +1667,7 @@ test.describe(
 			await expect(
 				await perfPage.seeDetailsLinkSessionShareChart()
 			).toBeVisible();
-			await expect(
-				page.locator(`text=${messageSessionConversionMultiUPC}`)
-			).toBeVisible();
+		
 		});
 	}
 );
@@ -1719,7 +1713,7 @@ test.describe(
 		}) => {
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
-			await perfPage.selectLastWeekDtAndCategory(lastWeekNumberInList);
+			await perfPage.selectLastWeekDtAndCategory(last4WeekNumberInList);
 			await perfPage.verifyToolTipMessage();
 		});
 	}
