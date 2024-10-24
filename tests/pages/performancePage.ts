@@ -183,7 +183,12 @@ class PerformancePage extends CommonClass {
 			this.page.locator(
 				"//div[contains(@class, 'HierarchySelector-module_selectionItemList__rsWHN')]/div[1]//*[local-name()='svg']"
 			),
-		selectCustomCategory :(index:number)=>this.page.locator("//div[contains(@class, 'HierarchySelector-module_selectionItemList__rsWHN')]/div["+index+"]//button"),
+		selectCustomCategory: (index: number) =>
+			this.page.locator(
+				"//div[contains(@class, 'HierarchySelector-module_selectionItemList__rsWHN')]/div[" +
+					index +
+					']//button'
+			),
 
 		// xpath of categort hirarchy popup
 		categoryHirarchyDialogue: () =>
@@ -320,7 +325,9 @@ class PerformancePage extends CommonClass {
 
 		// xpath of legends below hod or dow filter
 		legendBelowHODDOWFilter: (filter: string) =>
-			this.page.locator(`//div[@id='hourly-daily-trend']//div[contains(@aria-label, '${filter}')]`),
+			this.page.locator(
+				`//div[@id='hourly-daily-trend']//div[contains(@aria-label, '${filter}')]`
+			),
 
 		// xpath for hod Chart link
 		hodChartLink: () =>
@@ -348,10 +355,7 @@ class PerformancePage extends CommonClass {
 			),
 
 		// paste a upc area
-		upcPaste: () =>
-			this.page.locator(
-				"//input[@type='text']"
-			),
+		upcPaste: () => this.page.locator("//input[@type='text']"),
 		// xpath of pasted upc
 		pastedUpc: (aUpc: string) =>
 			this.page.locator("//div[text()='" + aUpc + "']"),
@@ -586,22 +590,21 @@ class PerformancePage extends CommonClass {
 			this.performanceElements.donutChartPresence()
 		).toBeVisible();
 
-		// FIXME: FIX THIS AFTER DONUTPAGE
-		// await expect(
-		// 	sotDonutPage.checkDonutMetrics('Walmart.com External')
-		// ).toBeVisible();
-		// await expect(
-		// 	sotDonutPage.checkDonutMetrics('Mobile App Non-Search')
-		// ).toBeVisible();
-		// await expect(
-		// 	sotDonutPage.checkDonutMetrics('Mobile App Search')
-		// ).toBeVisible();
-		// await expect(
-		// 	sotDonutPage.checkDonutMetrics('Walmart.com Non-Search')
-		// ).toBeVisible();
-		// await expect(
-		// 	sotDonutPage.checkDonutMetrics('Walmart.com Search')
-		// ).toBeVisible();
+		await expect(
+			await this.sotDonutPage.checkDonutMetrics('Walmart.com External')
+		).toBeVisible();
+		await expect(
+			await this.sotDonutPage.checkDonutMetrics('Mobile App Non-Search')
+		).toBeVisible();
+		await expect(
+			await this.sotDonutPage.checkDonutMetrics('Mobile App Search')
+		).toBeVisible();
+		await expect(
+			await this.sotDonutPage.checkDonutMetrics('Walmart.com Non-Search')
+		).toBeVisible();
+		await expect(
+			await this.sotDonutPage.checkDonutMetrics('Walmart.com Search')
+		).toBeVisible();
 	}
 
 	// dateFilter dialogue
@@ -976,29 +979,32 @@ class PerformancePage extends CommonClass {
 		await this.dateFilterApplyBtnClick();
 		await (await this.verifyDeptAndCatFilter()).click();
 		await (await this.checkUncheckADepartment(1)).click();
-		await this.page.waitForTimeout(DEFAULT_TIMEOUT)
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		await (await this.checkUncheckADepartment(1)).click();
 		await this.page.locator('button', { hasText: 'Confirm' }).click();
 	}
 
-
-	async selectDateAndCustomCategory(lastWeekNumberInList: string,department:number,category:number) {
+	async selectDateAndCustomCategory(
+		lastWeekNumberInList: string,
+		department: number,
+		category: number
+	) {
 		await this.dateFilterIcon().click();
 		//click on last week
 		await this.clickWeekNumbersList(lastWeekNumberInList).click();
 		await this.dateFilterApplyBtnClick();
 		await (await this.verifyDeptAndCatFilter()).click();
 		await (await this.checkUncheckADepartment(department)).click();
-		await this.page.waitForTimeout(DEFAULT_TIMEOUT)
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		await (await this.checkUncheckADepartment(department)).click();
-		await (this.performanceElements.selectCustomCategory(category)).click();
+		await this.performanceElements.selectCustomCategory(category).click();
 		await this.page.locator('button', { hasText: 'Confirm' }).click();
 	}
 
 	// get category selected and verify from dept and category filter that selected category is applied correctly
 	async checkSelectedCategoryIsApplied(categoryNum: string) {
 		await (await this.verifyDeptAndCatFilter()).click();
-		
+
 		const text = await this.performanceElements
 			.categorySelectedFromFilter(categoryNum)
 			.innerText();
@@ -1233,17 +1239,14 @@ class PerformancePage extends CommonClass {
 	}
 
 	// get billboards any menu data
-	// async getBillboardMenus(metricsValue: any, menuPosition: any) {
-	// 	//click on billboard menu button
-	// 	await this.clickBillBoardMenus(menuPosition).click();
-	// 	await this.clickBillBoardMenu(metricsValue).click();
-	// 	return this.getBillboardMetrics().then(
-	// 		(metricsvalue: { text: any }) => {
-	// 			let val = metricsvalue.text;
-	// 			return cy.wrap({ val });
-	// 		}
-	// 	);
-	// }
+	async getBillboardMenus(metricsValue: any, menuPosition: any) {
+		//click on billboard menu button
+		await (await this.clickBillBoardMenus(menuPosition)).click();
+		await (await this.clickBillBoardMenu(metricsValue)).click();
+		const { text } = await this.getBillboardMetrics();
+
+		return { text };
+	}
 	// verify session conversion tooltip
 	// async verifySessionConvChartMetricsForUpc(
 	// 	lastWeekNumberInList: any,
@@ -1378,7 +1381,7 @@ class PerformancePage extends CommonClass {
 
 		const searchInput = this.performanceElements.upcPaste();
 		await searchInput.click();
-		await this.page.keyboard.type(aUpc,{delay:50});
+		await this.page.keyboard.type(aUpc, { delay: 50 });
 		await this.page.keyboard.press('Enter');
 		// await searchInput.fill(aUpc); // Fill the input field with the UPC
 		// await searchInput.press('Enter'); // Simulate pressing Enter
@@ -1688,12 +1691,14 @@ class PerformancePage extends CommonClass {
 			"//div[@id='hourly-daily-trend']"
 		);
 		const box = await tooltipButton.boundingBox();
-		await tooltipButton.hover({force: true});	
+		await tooltipButton.hover({ force: true });
 		await tooltipButton.click({ force: true });
 
-		const tooltipContainer = this.page.locator(
-			'#hourly-daily-trend .am5-tooltip-container div[role="tooltip"]'
-		).first();
+		const tooltipContainer = this.page
+			.locator(
+				'#hourly-daily-trend .am5-tooltip-container div[role="tooltip"]'
+			)
+			.first();
 		await tooltipContainer.waitFor();
 		const tooltipText = (await tooltipContainer.innerText()).trim();
 		let url;
@@ -1733,7 +1738,7 @@ class PerformancePage extends CommonClass {
 			headers: header,
 			data: AreaPayload
 		});
-		
+
 		tooltipDay = hodOrDow.includes('hod')
 			? tooltipText.substring(0, 2)
 			: tooltipText.substring(0, 3);
@@ -1794,12 +1799,14 @@ class PerformancePage extends CommonClass {
 			"//div[@id='hourly-daily-trend']"
 		);
 		const box = await tooltipButton.boundingBox();
-		await tooltipButton.hover({force: true});	
+		await tooltipButton.hover({ force: true });
 		await tooltipButton.click({ force: true });
 
-		const tooltipContainer = this.page.locator(
-			'#hourly-daily-trend .am5-tooltip-container div[role="tooltip"]'
-		).first();
+		const tooltipContainer = this.page
+			.locator(
+				'#hourly-daily-trend .am5-tooltip-container div[role="tooltip"]'
+			)
+			.first();
 		await tooltipContainer.waitFor();
 		let tooltipText = (await tooltipContainer.innerText()).trim();
 
@@ -1850,8 +1857,9 @@ class PerformancePage extends CommonClass {
 		const AvgValuePdpViewCount = jsonResponse.find(
 			(item: any) => item.position === tooltipDay
 		);
-	
-		let AvgValuePdpCount = AvgValuePdpViewCount.avg_pdp_view_count.toString();
+
+		let AvgValuePdpCount =
+			AvgValuePdpViewCount.avg_pdp_view_count.toString();
 
 		tooltipText = tooltipText.replace(',', '');
 

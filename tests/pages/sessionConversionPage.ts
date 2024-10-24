@@ -1,4 +1,14 @@
 import { expect, Page } from '@playwright/test';
+import PerformancePage from './performancePage';
+import { DEFAULT_TIMEOUT } from '../../config';
+import {
+	line,
+	lineProd,
+	lineStg,
+	table,
+	tableProd,
+	tableStg
+} from '../../shared/routes';
 
 class SessionConversionPage {
 	page: Page;
@@ -212,31 +222,31 @@ class SessionConversionPage {
 	}
 
 	// verify tooltip message
-	async verifyToolTipMessage(minWaitTime: number) {
+	async verifyToolTipMessage() {
 		await this.sessionConversionPageElements.conversionHoverText().hover();
-		await this.page.waitForTimeout(minWaitTime);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		await expect(
 			this.sessionConversionPageElements.messageAfterHover()
 		).toBeVisible();
 	}
 
 	// verify tooltip for session conversion trend message
-	async verifyToolTipSessionConvTrendMessage(minWaitTime: number) {
+	async verifyToolTipSessionConvTrendMessage() {
 		await this.sessionConversionPageElements
 			.conversionTrendHoverText()
 			.hover();
-		await this.page.waitForTimeout(minWaitTime);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		await expect(
 			this.sessionConversionPageElements.TrendmessageAfterHover()
 		).toBeVisible();
 	}
 
 	// verify tooltip message for conversion count chart
-	async verifyToolTipSessionConvCountMessage(minWaitTime: number) {
+	async verifyToolTipSessionConvCountMessage() {
 		await this.sessionConversionPageElements
 			.conversionCountHoverText()
 			.hover();
-		await this.page.waitForTimeout(minWaitTime);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		await expect(
 			this.sessionConversionPageElements.countMessageAfterHover()
 		).toBeVisible();
@@ -249,101 +259,86 @@ class SessionConversionPage {
 
 	// FIXME
 	//perform sort check upc
-	// sortingCheck() {
-	// 	cy.get('table').within(() => {
-	// 		cy.get('tbody > tr').then((rows) => {
-	// 			const num = [];
-	// 			rows.each((index, row) => {
-	// 				cy.wrap(row)
-	// 					.find('td:first')
-	// 					.invoke('text')
-	// 					.then((text) => {
-	// 						num.push(parseInt(text, 10));
-	// 					});
-	// 			});
+	async sortingCheck() {
+		const numbers = await this.page.$$eval('table tbody > tr', (rows) =>
+			rows.map((row) =>
+				parseInt(
+					row.querySelector('td:first-child')?.textContent?.trim() ||
+						'0',
+					10
+				)
+			)
+		);
 
-	// 			cy.wrap(num).then((parseNum) => {
-	// 				for (let i = 0; i < parseNum.length - 1; i++) {
-	// 					let secondNum = parseInt(parseNum[i + 1]);
-	// 					let firstNum = parseInt(parseNum[i]);
-	// 					expect(firstNum).to.be.at.most(secondNum);
-	// 				}
-	// 			});
-	// 		});
-	// 	});
-	// }
+		for (let i = 0; i < numbers.length - 1; i++) {
+			expect(numbers[i]).toBeLessThanOrEqual(numbers[i + 1]);
+		}
+	}
 
 	// //perform sort string
-	// sortingCheckString() {
-	// 	cy.get('table').within(() => {
-	// 		cy.get('tbody > tr').then((rows) => {
-	// 			const strings = [];
-	// 			rows.each((index, row) => {
-	// 				cy.wrap(row)
-	// 					.find('td:first')
-	// 					.invoke('text')
-	// 					.then((text) => {
-	// 						strings.push(text.trim());
-	// 					});
-	// 			});
 
-	// 			cy.wrap(strings).then((strings) => {
-	// 				for (let i = 0; i < strings.length - 1; i++) {
-	// 					expect(strings[i] <= strings[i + 1]).to.be.true;
-	// 				}
-	// 			});
-	// 		});
-	// 	});
-	// }
+	async sortingCheckString() {
+		const rows = await this.page.$$eval('table tbody > tr', (rows) =>
+			rows.map(
+				(row) =>
+					row.querySelector('td:first-child')?.textContent?.trim() ??
+					''
+			)
+		);
+
+		for (let i = 0; i < rows.length - 1; i++) {
+			expect(rows[i] <= rows[i + 1]).toBeTruthy();
+		}
+	}
 
 	// // check table headers
-	// checkTableHeaders(filter) {
-	// 	// Assert that the table headers contain the expected text values
-	// 	this.sessionConversionPageElements.tableHeaders().should(($headers) => {
-	// 		// Extract the text content of the headers
-	// 		const headerTexts = $headers
-	// 			.map((index, header) => Cypress.$(header).text())
-	// 			.get();
-	// 		// Define the expected text values
-	// 		if (filter === 'Item') {
-	// 			let expectedTexts = [
-	// 				filter,
-	// 				'Description',
-	// 				'Change vs Prev Time Period',
-	// 				'Session PDP View Rate (%)',
-	// 				'Change vs Prev Time Period',
-	// 				'Session Add to Cart Rate (%)',
-	// 				'Change vs Prev Time Period',
-	// 				'Session Purchase Rate (%)',
-	// 				'Change vs Prev Time Period',
-	// 				'Product Detail Page Views (PDP)',
-	// 				'Change vs Prev Time Period',
-	// 				'Add to Cart Count',
-	// 				'Change vs Prev Time Period',
-	// 				'Purchase Count'
-	// 			];
-	// 			expect(headerTexts).to.deep.equal(expectedTexts);
-	// 		} else {
-	// 			let expectedTexts = [
-	// 				filter,
-	// 				'Change vs Prev Time Period',
-	// 				'Session PDP View Rate (%)',
-	// 				'Change vs Prev Time Period',
-	// 				'Session Add to Cart Rate (%)',
-	// 				'Change vs Prev Time Period',
-	// 				'Session Purchase Rate (%)',
-	// 				'Change vs Prev Time Period',
-	// 				'Product Detail Page Views (PDP)',
-	// 				'Change vs Prev Time Period',
-	// 				'Add to Cart Count',
-	// 				'Change vs Prev Time Period',
-	// 				'Purchase Count'
-	// 			];
-	// 			// Check if the expected text values are present in the headers
-	// 			expect(headerTexts).to.deep.equal(expectedTexts);
-	// 		}
-	// 	});
-	// }
+	async checkTableHeaders(filter: string) {
+		// Locate the table headers
+		const headerElements = this.page.locator('.table-header-selector'); // Replace with actual selector for table headers
+		const headerTexts = await headerElements.evaluateAll((headers) =>
+			headers.map((header) => (header as HTMLElement).innerText)
+		);
+
+		// Define the expected text values based on the filter
+		let expectedTexts: string[];
+		if (filter === 'Item') {
+			expectedTexts = [
+				filter,
+				'Description',
+				'Change vs Prev Time Period',
+				'Session PDP View Rate (%)',
+				'Change vs Prev Time Period',
+				'Session Add to Cart Rate (%)',
+				'Change vs Prev Time Period',
+				'Session Purchase Rate (%)',
+				'Change vs Prev Time Period',
+				'Product Detail Page Views (PDP)',
+				'Change vs Prev Time Period',
+				'Add to Cart Count',
+				'Change vs Prev Time Period',
+				'Purchase Count'
+			];
+		} else {
+			expectedTexts = [
+				filter,
+				'Change vs Prev Time Period',
+				'Session PDP View Rate (%)',
+				'Change vs Prev Time Period',
+				'Session Add to Cart Rate (%)',
+				'Change vs Prev Time Period',
+				'Session Purchase Rate (%)',
+				'Change vs Prev Time Period',
+				'Product Detail Page Views (PDP)',
+				'Change vs Prev Time Period',
+				'Add to Cart Count',
+				'Change vs Prev Time Period',
+				'Purchase Count'
+			];
+		}
+
+		// Assert that the table headers contain the expected text values
+		expect(headerTexts).toEqual(expectedTexts);
+	}
 
 	// table filter
 	async tableFilterButton() {
@@ -401,886 +396,350 @@ class SessionConversionPage {
 		return { text };
 	}
 
+	async seeDetailsLink() {
+		return this.sessionConversionPageElements.seeDetailsLink();
+	}
+
 	// FIXME:
 	// verify session conversion tooltip
-	// verifySessionConvChartMetricsForCategory(
-	// 	lastWeekNumberInList,
-	// 	minWaitTime,
-	// 	metricsPositionInConversionChart
-	// ) {
-	// 	return this.getMetricsValueForConversionFromchart(
-	// 		metricsPositionInConversionChart
-	// 	).then((metrics) => {
-	// 		let metric = metrics.text;
-	// 		cy.wait(minWaitTime);
-	// 		return cy.wrap({ metric });
-	// 	});
-	// }
+	async verifySessionConvChartMetricsForCategory(
+		metricsPositionInConversionChart: string
+	) {
+		const metric = await this.getMetricsValueForConversionFromchart(
+			metricsPositionInConversionChart
+		);
+		return { text: metric.text };
+	}
 
 	//verify tooltip for session conversion chart
-	// checkTooltipSessionConvChart(
-	// 	url,
-	// 	lastWeekNumberInList,
-	// 	minWaitTime,
-	// 	intervalSrc
-	// ) {
-	// 	let tooltipDay;
-	// 	let interval;
-	// 	perfPage
-	// 		.datesFromFilter(lastWeekNumberInList, minWaitTime)
-	// 		.then((dates) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
-	// 			perfPage.dateFilterApplyBtnClick();
-	// 			perfPage.checkSelectedCategoryIsApplied(1).then((category) => {
-	// 				perfPage
-	// 					.verifyDeptAndCatFilter({ timeout: minWaitTime })
-	// 					.click();
-	// 				perfPage.getDepartmentNumber().then((departNum) => {
-	// 					cy.contains('button', 'Confirm').click();
-	// 					cy.getCompanyId(url).then((cmpanyId) => {
-	// 						let compnyId = cmpanyId;
-	// 						let categoryNbr = category.text;
-	// 						let dNum = departNum.numberExtracted;
-	// 						this.seeDetailsLink({
-	// 							timeout: minWaitTime
-	// 						}).click();
-	// 						cy.xpath(
-	// 							'//div[@class="yJfHlxanVK_9sqvre0jL"]//button[text()="Daily"]'
-	// 						).click();
-	// 						this.dailyWeeklyFromSessionConversionTrend(
-	// 							'Daily'
-	// 						).click();
-	// 						cy.wait(minWaitTime);
-	// 						cy.xpath(
-	// 							'//*[@id="soc-trend"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
-	// 						).invoke('show');
-	// 						cy.xpath(
-	// 							'//*[@id="soc-trend"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
-	// 						).click({ force: true });
-	// 						cy.get('#soc-trend .am5-tooltip-container').invoke(
-	// 							'show'
-	// 						);
-	// 						cy.get('#soc-trend .am5-tooltip-container').click({
-	// 							force: true
-	// 						});
-	// 						cy.xpath(
-	// 							"//div[@id='soc-trend']//canvas[@class='am5-layer-30']"
-	// 						)
-	// 							.invoke('show')
-	// 							.click({ force: true });
-	// 						cy.get('#soc-trend .am5-tooltip-container').each(
-	// 							($tooltipContainer, index) => {
-	// 								cy.wrap($tooltipContainer)
-	// 									.find('[role="tooltip"]')
-	// 									.eq(index)
-	// 									.invoke('mouseover')
-	// 									.then(() => {
-	// 										cy.wrap($tooltipContainer)
-	// 											.find('[role="tooltip"]')
-	// 											.eq(index)
-	// 											.invoke('text')
-	// 											.then((tooltipText) => {
-	// 												if (
-	// 													url ==
-	// 													'https://stg.walmartluminate.com/digitallandscapes/'
-	// 												) {
-	// 													cy.intercept(
-	// 														lineStg
-	// 													).as('line');
-	// 												} else if (
-	// 													url ==
-	// 													'https://www.walmartluminate.com/digitallandscapes/'
-	// 												) {
-	// 													cy.intercept(
-	// 														lineProd
-	// 													).as('line');
-	// 												} else if (
-	// 													url ==
-	// 													'https://dev.walmartluminate.com/digitallandscapes/'
-	// 												) {
-	// 													cy.intercept(line).as(
-	// 														'line'
-	// 													);
-	// 												}
-	// 												cy.getCookie(
-	// 													'LUMINATE_TOKEN'
-	// 												).then((cookie) => {
-	// 													const luminationToken =
-	// 														cookie
-	// 															? cookie.value
-	// 															: null;
-	// 													let header =
-	// 														new ApiHeaders().getHeadersAndCookies(
-	// 															url,
-	// 															luminationToken
-	// 														);
-	// 													categoryNbr =
-	// 														categoryNbr.split(
-	// 															' '
-	// 														)[0];
-	// 													let startDate =
-	// 														new Date(dateStart);
-	// 													let endDate = new Date(
-	// 														dateEnd
-	// 													);
-	// 													cy.oneDayPreviousDate(
-	// 														startDate,
-	// 														endDate
-	// 													).then(
-	// 														(datenumeric) => {
-	// 															tooltipDay =
-	// 																tooltipText.substring(
-	// 																	0,
-	// 																	6
-	// 																);
-	// 															if (
-	// 																intervalSrc.includes(
-	// 																	'Daily'
-	// 																)
-	// 															) {
-	// 																interval =
-	// 																	'Daily';
-	// 															} else {
-	// 																interval =
-	// 																	'Weekly';
-	// 															}
-	// 															let linePayload =
-	// 																new ApiPayloads().getLinePayloadForCategory(
-	// 																	dateStart,
-	// 																	dateEnd,
-	// 																	dNum +
-	// 																		'_' +
-	// 																		categoryNbr,
-	// 																	interval,
-	// 																	compnyId
-	// 																);
-	// 															if (
-	// 																url ==
-	// 																'https://stg.walmartluminate.com/digitallandscapes/'
-	// 															) {
-	// 																cy.request({
-	// 																	method: 'POST',
-	// 																	url: lineStg,
-	// 																	headers:
-	// 																		header,
-	// 																	body: linePayload
-	// 																}).then(
-	// 																	(
-	// 																		response
-	// 																	) => {
-	// 																		tooltipDay =
-	// 																			tooltipText.substring(
-	// 																				0,
-	// 																				6
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		const sessionPdpViewRateValue =
-	// 																			response.body.find(
-	// 																				(
-	// 																					item
-	// 																				) =>
-	// 																					item.position ===
-	// 																					tooltipDay
-	// 																			);
-	// 																		let sessionPdpViewRateValueReceived =
-	// 																			sessionPdpViewRateValue.sessionPdpViewRate;
-	// 																		sessionPdpViewRateValueReceived =
-	// 																			sessionPdpViewRateValueReceived.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.replace(
-	// 																				',',
-	// 																				''
-	// 																			);
-	// 																		expect(
-	// 																			tooltipText
-	// 																		).contains(
-	// 																			sessionPdpViewRateValueReceived
-	// 																		);
-	// 																	}
-	// 																);
-	// 															} else if (
-	// 																url ==
-	// 																'https://www.walmartluminate.com/digitallandscapes/'
-	// 															) {
-	// 																cy.request({
-	// 																	method: 'POST',
-	// 																	url: lineProd,
-	// 																	headers:
-	// 																		header,
-	// 																	body: linePayload
-	// 																}).then(
-	// 																	(
-	// 																		response
-	// 																	) => {
-	// 																		tooltipDay =
-	// 																			tooltipText.substring(
-	// 																				0,
-	// 																				6
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		const sessionPdpViewRateValue =
-	// 																			response.body.find(
-	// 																				(
-	// 																					item
-	// 																				) =>
-	// 																					item.position ===
-	// 																					tooltipDay
-	// 																			);
-	// 																		let sessionPdpViewRateValueReceived =
-	// 																			sessionPdpViewRateValue.sessionPdpViewRate;
-	// 																		sessionPdpViewRateValueReceived =
-	// 																			sessionPdpViewRateValueReceived.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.replace(
-	// 																				',',
-	// 																				''
-	// 																			);
-	// 																		expect(
-	// 																			tooltipText
-	// 																		).contains(
-	// 																			sessionPdpViewRateValueReceived
-	// 																		);
-	// 																	}
-	// 																);
-	// 															} else {
-	// 																cy.request({
-	// 																	method: 'POST',
-	// 																	url: line,
-	// 																	headers:
-	// 																		header,
-	// 																	body: linePayload
-	// 																}).then(
-	// 																	(
-	// 																		response
-	// 																	) => {
-	// 																		tooltipDay =
-	// 																			tooltipText.substring(
-	// 																				0,
-	// 																				6
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		const sessionPdpViewRateValue =
-	// 																			response.body.find(
-	// 																				(
-	// 																					item
-	// 																				) =>
-	// 																					item.position ===
-	// 																					tooltipDay
-	// 																			);
-	// 																		let sessionPdpViewRateValueReceived =
-	// 																			sessionPdpViewRateValue.sessionPdpViewRate;
-	// 																		sessionPdpViewRateValueReceived =
-	// 																			sessionPdpViewRateValueReceived.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.replace(
-	// 																				',',
-	// 																				''
-	// 																			);
-	// 																		expect(
-	// 																			tooltipText
-	// 																		).contains(
-	// 																			sessionPdpViewRateValueReceived
-	// 																		);
-	// 																	}
-	// 																);
-	// 															}
-	// 														}
-	// 													);
-	// 												});
-	// 											});
-	// 									});
-	// 							}
-	// 						);
-	// 					});
-	// 				});
-	// 			});
-	// 		});
-	// }
+	async checkTooltipSessionConvChart(
+		lastWeekNumberInList: string,
+		intervalSrc: string
+	) {
+		let tooltipDay: string;
+		let interval: string;
+		const perfPage = new PerformancePage(this.page);
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		const dateStart = dates.startreversedDateReceived;
+		const dateEnd = dates.endreversedDateReceived;
+
+		await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
+		await perfPage.dateFilterApplyBtnClick();
+
+		const category = await perfPage.checkSelectedCategoryIsApplied('1');
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+
+		const departNum = await perfPage.getDepartmentNumber();
+		const departmentNumber = departNum.numberExtracted;
+
+		await this.page.locator('button:has-text("Confirm")').click();
+
+		const companyId = await perfPage.getCompanyId();
+
+		const categoryNbr = category.text?.split(' ')[0];
+
+		await (await perfPage.seeDetailsLink()).click();
+
+		await this.page
+			.locator(
+				'//div[@class="yJfHlxanVK_9sqvre0jL"]//button[text()="Daily"]'
+			)
+			.click();
+		await (
+			await this.dailyWeeklyFromSessionConversionTrend('Daily')
+		).click();
+
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		// Show and click the tooltip container
+		await this.page
+			.locator(
+				'//*[@id="soc-trend"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
+			)
+			.hover();
+		await this.page
+			.locator(
+				'//*[@id="soc-trend"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
+			)
+			.click({ force: true });
+
+		let lineUrl = '';
+		if (process.env.ENV === 'QA') {
+			lineUrl = lineStg;
+		} else if (process.env.ENV === 'PROD') {
+			lineUrl = lineProd;
+		} else {
+			lineUrl = line;
+		}
+		const cookieString = await perfPage.getCookie();
+
+		// Get the tooltip text and perform API requests accordingly
+		const tooltipContainers = await this.page
+			.locator('#soc-trend .am5-tooltip-container')
+			.elementHandles();
+		for (const tooltipContainer of tooltipContainers) {
+			const tooltipText = await tooltipContainer.$eval(
+				'[role="tooltip"]',
+				(el) => el.textContent
+			);
+			tooltipDay = tooltipText?.substring(0, 6) ?? '';
+
+			interval = intervalSrc.includes('Daily') ? 'Daily' : 'Weekly';
+
+			const linePayload = perfPage.getLinePayloadForCategory(
+				dateStart,
+				dateEnd,
+				`${departmentNumber}_${categoryNbr}`,
+				interval,
+				companyId
+			);
+
+			const headers = await perfPage.getHeadersAndCookies(cookieString);
+
+			const response = await this.page.request.post(lineUrl, {
+				headers,
+				data: linePayload
+			});
+
+			const jsonResponse = await response.json();
+
+			const sessionPdpViewRateValue = await jsonResponse.find(
+				(item: any) => item.position === tooltipDay
+			);
+			const sessionPdpViewRateValueReceived =
+				sessionPdpViewRateValue.sessionPdpViewRate.toString();
+			const tooltipTextCleaned = tooltipText?.replace(',', '');
+
+			expect(tooltipTextCleaned).toContain(
+				sessionPdpViewRateValueReceived
+			);
+		}
+	}
 
 	//verify tooltip for session conversion count chart
-	// checkTooltipSessionConvCountChart(
-	// 	url,
-	// 	lastWeekNumberInList,
-	// 	minWaitTime,
-	// 	intervalSrc
-	// ) {
-	// 	let tooltipDay;
-	// 	let interval;
-	// 	perfPage
-	// 		.datesFromFilter(lastWeekNumberInList, minWaitTime)
-	// 		.then((dates) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
-	// 			perfPage.dateFilterApplyBtnClick();
-	// 			perfPage.checkSelectedCategoryIsApplied(1).then((category) => {
-	// 				perfPage
-	// 					.verifyDeptAndCatFilter({ timeout: minWaitTime })
-	// 					.click();
-	// 				perfPage.getDepartmentNumber().then((departNum) => {
-	// 					cy.contains('button', 'Confirm').click();
-	// 					cy.getCompanyId(url).then((cmpanyId) => {
-	// 						let compnyId = cmpanyId;
-	// 						let categoryNbr = category.text;
-	// 						let dNum = departNum.numberExtracted;
-	// 						this.seeDetailsLink({
-	// 							timeout: minWaitTime
-	// 						}).click();
-	// 						cy.xpath(
-	// 							'//div[@class="yJfHlxanVK_9sqvre0jL"]//button[text()="Daily"]'
-	// 						).click();
-	// 						this.dailyWeeklyFromSessionConversionTrend(
-	// 							'Daily'
-	// 						).click();
-	// 						cy.wait(minWaitTime);
-	// 						cy.xpath(
-	// 							'//*[@id="soc-count"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
-	// 						).invoke('show');
-	// 						cy.xpath(
-	// 							'//*[@id="soc-count"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
-	// 						).click({ force: true });
-	// 						cy.get('#soc-count .am5-tooltip-container').invoke(
-	// 							'show'
-	// 						);
-	// 						cy.get('#soc-count .am5-tooltip-container').click({
-	// 							force: true
-	// 						});
-	// 						cy.xpath(
-	// 							"//div[@id='soc-count']//canvas[@class='am5-layer-30']"
-	// 						)
-	// 							.invoke('show')
-	// 							.click({ force: true });
-	// 						cy.get('#soc-count .am5-tooltip-container').each(
-	// 							($tooltipContainer, index) => {
-	// 								cy.wrap($tooltipContainer)
-	// 									.find('[role="tooltip"]')
-	// 									.eq(index)
-	// 									.invoke('mouseover')
-	// 									.then(() => {
-	// 										cy.wrap($tooltipContainer)
-	// 											.find('[role="tooltip"]')
-	// 											.eq(index)
-	// 											.invoke('text')
-	// 											.then((tooltipText) => {
-	// 												if (
-	// 													url ==
-	// 													'https://stg.walmartluminate.com/digitallandscapes/'
-	// 												) {
-	// 													cy.intercept(
-	// 														lineStg
-	// 													).as('line');
-	// 												} else if (
-	// 													url ==
-	// 													'https://www.walmartluminate.com/digitallandscapes/'
-	// 												) {
-	// 													cy.intercept(
-	// 														lineProd
-	// 													).as('line');
-	// 												} else if (
-	// 													url ==
-	// 													'https://dev.walmartluminate.com/digitallandscapes/'
-	// 												) {
-	// 													cy.intercept(line).as(
-	// 														'line'
-	// 													);
-	// 												}
-	// 												cy.getCookie(
-	// 													'LUMINATE_TOKEN'
-	// 												).then((cookie) => {
-	// 													const luminationToken =
-	// 														cookie
-	// 															? cookie.value
-	// 															: null;
-	// 													let header =
-	// 														new ApiHeaders().getHeadersAndCookies(
-	// 															url,
-	// 															luminationToken
-	// 														);
-	// 													categoryNbr =
-	// 														categoryNbr.split(
-	// 															' '
-	// 														)[0];
-	// 													let startDate =
-	// 														new Date(dateStart);
-	// 													let endDate = new Date(
-	// 														dateEnd
-	// 													);
-	// 													cy.oneDayPreviousDate(
-	// 														startDate,
-	// 														endDate
-	// 													).then(
-	// 														(datenumeric) => {
-	// 															tooltipDay =
-	// 																tooltipText.substring(
-	// 																	0,
-	// 																	6
-	// 																);
-	// 															if (
-	// 																intervalSrc.includes(
-	// 																	'Daily'
-	// 																)
-	// 															) {
-	// 																interval =
-	// 																	'Daily';
-	// 															} else {
-	// 																interval =
-	// 																	'Weekly';
-	// 															}
-	// 															let linePayload =
-	// 																new ApiPayloads().getLinePayloadForCategory(
-	// 																	dateStart,
-	// 																	dateEnd,
-	// 																	dNum +
-	// 																		'_' +
-	// 																		categoryNbr,
-	// 																	interval,
-	// 																	compnyId
-	// 																);
-	// 															if (
-	// 																url ==
-	// 																'https://stg.walmartluminate.com/digitallandscapes/'
-	// 															) {
-	// 																cy.request({
-	// 																	method: 'POST',
-	// 																	url: lineStg,
-	// 																	headers:
-	// 																		header,
-	// 																	body: linePayload
-	// 																}).then(
-	// 																	(
-	// 																		response
-	// 																	) => {
-	// 																		tooltipDay =
-	// 																			tooltipText.substring(
-	// 																				0,
-	// 																				6
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		const sessionPdpViewValue =
-	// 																			response.body.find(
-	// 																				(
-	// 																					item
-	// 																				) =>
-	// 																					item.position ===
-	// 																					tooltipDay
-	// 																			);
-	// 																		let sessionPdpViewValueReceived =
-	// 																			sessionPdpViewValue.pdpViewCount;
-	// 																		sessionPdpViewValueReceived =
-	// 																			sessionPdpViewValueReceived.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.replace(
-	// 																				',',
-	// 																				''
-	// 																			);
-	// 																		expect(
-	// 																			tooltipText
-	// 																		).contains(
-	// 																			sessionPdpViewValueReceived
-	// 																		);
-	// 																	}
-	// 																);
-	// 															} else if (
-	// 																url ==
-	// 																'https://www.walmartluminate.com/digitallandscapes/'
-	// 															) {
-	// 																cy.request({
-	// 																	method: 'POST',
-	// 																	url: lineProd,
-	// 																	headers:
-	// 																		header,
-	// 																	body: linePayload
-	// 																}).then(
-	// 																	(
-	// 																		response
-	// 																	) => {
-	// 																		tooltipDay =
-	// 																			tooltipText.substring(
-	// 																				0,
-	// 																				6
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		const sessionPdpViewValue =
-	// 																			response.body.find(
-	// 																				(
-	// 																					item
-	// 																				) =>
-	// 																					item.position ===
-	// 																					tooltipDay
-	// 																			);
-	// 																		let sessionPdpViewValueReceived =
-	// 																			sessionPdpViewValue.pdpViewCount;
-	// 																		sessionPdpViewValueReceived =
-	// 																			sessionPdpViewValueReceived.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.replace(
-	// 																				',',
-	// 																				''
-	// 																			);
-	// 																		expect(
-	// 																			tooltipText
-	// 																		).contains(
-	// 																			sessionPdpViewValueReceived
-	// 																		);
-	// 																	}
-	// 																);
-	// 															} else {
-	// 																cy.request({
-	// 																	method: 'POST',
-	// 																	url: line,
-	// 																	headers:
-	// 																		header,
-	// 																	body: linePayload
-	// 																}).then(
-	// 																	(
-	// 																		response
-	// 																	) => {
-	// 																		tooltipDay =
-	// 																			tooltipText.substring(
-	// 																				0,
-	// 																				6
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		const sessionPdpViewRateValue =
-	// 																			response.body.find(
-	// 																				(
-	// 																					item
-	// 																				) =>
-	// 																					item.position ===
-	// 																					tooltipDay
-	// 																			);
-	// 																		let sessionPdpViewValueReceived =
-	// 																			sessionPdpViewRateValue.pdpViewCount;
-	// 																		sessionPdpViewValueReceived =
-	// 																			sessionPdpViewValueReceived.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.replace(
-	// 																				',',
-	// 																				''
-	// 																			);
-	// 																		expect(
-	// 																			tooltipText
-	// 																		).contains(
-	// 																			sessionPdpViewValueReceived
-	// 																		);
-	// 																	}
-	// 																);
-	// 															}
-	// 														}
-	// 													);
-	// 												});
-	// 											});
-	// 									});
-	// 							}
-	// 						);
-	// 					});
-	// 				});
-	// 			});
-	// 		});
-	// }
+	async checkTooltipSessionConvCountChart(
+		lastWeekNumberInList: string,
+		intervalSrc: string
+	) {
+		let tooltipDay: string;
+		let interval: string;
+		const perfPage = new PerformancePage(this.page);
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		const dateStart = dates.startreversedDateReceived;
+		const dateEnd = dates.endreversedDateReceived;
+
+		await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
+		await perfPage.dateFilterApplyBtnClick();
+
+		const category = await perfPage.checkSelectedCategoryIsApplied('1');
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+
+		const departNum = await perfPage.getDepartmentNumber();
+		const departmentNumber = departNum.numberExtracted;
+
+		await this.page.locator('button:has-text("Confirm")').click();
+
+		const companyId = await perfPage.getCompanyId();
+
+		const categoryNbr = category.text?.split(' ')[0];
+
+		await (await perfPage.seeDetailsLink()).click();
+
+		await this.page
+			.locator(
+				'//div[@class="yJfHlxanVK_9sqvre0jL"]//button[text()="Daily"]'
+			)
+			.click();
+		await (
+			await this.dailyWeeklyFromSessionConversionTrend('Daily')
+		).click();
+
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		// Show and click the tooltip container
+		await this.page
+			.locator(
+				'//*[@id="soc-count"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
+			)
+			.hover({ force: true });
+		await this.page
+			.locator(
+				'//*[@id="soc-count"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
+			)
+			.click({ force: true });
+
+		let lineUrl = '';
+		if (process.env.ENV === 'QA') {
+			lineUrl = lineStg;
+		} else if (process.env.ENV === 'PROD') {
+			lineUrl = lineProd;
+		} else {
+			lineUrl = line;
+		}
+		const cookieString = await perfPage.getCookie();
+		const headers = await perfPage.getHeadersAndCookies(cookieString);
+
+		// Get the tooltip text and perform API requests accordingly
+		const tooltipContainers = await this.page
+			.locator('#soc-count .am5-tooltip-container')
+			.elementHandles();
+		for (const tooltipContainer of tooltipContainers) {
+			const tooltipText = await tooltipContainer.$eval(
+				'[role="tooltip"]',
+				(el) => el.textContent
+			);
+			tooltipDay = tooltipText?.substring(0, 6) ?? '';
+
+			interval = intervalSrc.includes('Daily') ? 'Daily' : 'Weekly';
+
+			const linePayload = perfPage.getLinePayloadForCategory(
+				dateStart,
+				dateEnd,
+				`${departmentNumber}_${categoryNbr}`,
+				interval,
+				companyId
+			);
+
+			const response = await this.page.request.post(lineUrl, {
+				headers,
+				data: linePayload
+			});
+
+			const jsonResponse = await response.json();
+
+			const sessionPdpViewValue = jsonResponse.find(
+				(item: any) => item.position === tooltipDay
+			);
+			const sessionPdpViewValueReceived =
+				sessionPdpViewValue.pdpViewCount.toString();
+			const tooltipTextCleaned = tooltipText?.replace(',', '');
+
+			expect(tooltipTextCleaned).toContain(sessionPdpViewValueReceived);
+		}
+	}
 
 	// check table data with api
-	// verifyTableDataWithApi(url, lastWeekNumberInList, minWaitTime) {
-	// 	perfPage
-	// 		.datesFromFilter(lastWeekNumberInList, minWaitTime)
-	// 		.then((dates) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			perfPage.clickWeekFilter(lastWeekNumberInList);
-	// 			perfPage.dateFilterApplyBtnClick();
-	// 			perfPage
-	// 				.verifyDeptAndCatFilter({ timeout: minWaitTime })
-	// 				.click();
-	// 			perfPage.checkUncheckADepartment(1).click();
-	// 			perfPage.checkUncheckADepartment(1).click();
-	// 			cy.contains('button', 'Confirm').click();
-	// 			perfPage.checkSelectedCategoryIsApplied(1).then((category) => {
-	// 				perfPage
-	// 					.verifyDeptAndCatFilter({ timeout: minWaitTime })
-	// 					.click();
-	// 				perfPage.getDepartmentNumber().then((departNum) => {
-	// 					cy.contains('button', 'Confirm').click();
-	// 					cy.getCompanyId(url).then((cmpanyId) => {
-	// 						let compnyId = cmpanyId;
-	// 						let categoryNbr = category.text;
-	// 						let dNum = departNum.numberExtracted;
-	// 						categoryNbr = categoryNbr.split(' ')[0];
-	// 						this.seeDetailsLink({
-	// 							timeout: minWaitTime
-	// 						}).click();
-	// 						cy.wait(minWaitTime);
-	// 						if (
-	// 							url ==
-	// 							'https://stg.walmartluminate.com/digitallandscapes/'
-	// 						) {
-	// 							cy.intercept(tableStg).as('table');
-	// 						} else if (
-	// 							url ==
-	// 							'https://www.walmartluminate.com/digitallandscapes/'
-	// 						) {
-	// 							cy.intercept(tableProd).as('table');
-	// 						} else {
-	// 							cy.intercept(table).as('table');
-	// 						}
-	// 						cy.getCookie('LUMINATE_TOKEN').then((cookie) => {
-	// 							const luminationToken = cookie
-	// 								? cookie.value
-	// 								: null;
-	// 							let header =
-	// 								new ApiHeaders().getHeadersAndCookies(
-	// 									url,
-	// 									luminationToken
-	// 								);
-	// 							let tablePayload =
-	// 								new ApiPayloads().getPayloadTable(
-	// 									dateStart,
-	// 									dateEnd,
-	// 									dNum + '_' + categoryNbr,
-	// 									compnyId
-	// 								);
-	// 							if (
-	// 								url ==
-	// 								'https://stg.walmartluminate.com/digitallandscapes/'
-	// 							) {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: tableStg,
-	// 									headers: header,
-	// 									body: tablePayload
-	// 								}).then((response) => {
-	// 									const responseBody = response.body;
-	// 									let sessionPdpViewRate =
-	// 										responseBody[0].sessionPdpViewRate;
-	// 									if (sessionPdpViewRate === 0) {
-	// 										sessionPdpViewRate = '-';
-	// 									}
-	// 									this.getTableDataValue(3).then(
-	// 										(metricsValue) => {
-	// 											expect(
-	// 												metricsValue.text
-	// 											).to.contain(
-	// 												sessionPdpViewRate
-	// 											);
-	// 										}
-	// 									);
-	// 								});
-	// 							} else if (
-	// 								url ==
-	// 								'https://www.walmartluminate.com/digitallandscapes/'
-	// 							) {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: tableProd,
-	// 									headers: header,
-	// 									body: tablePayload
-	// 								}).then((response) => {
-	// 									const responseBody = response.body;
-	// 									let sessionPdpViewRate =
-	// 										responseBody[0].sessionPdpViewRate;
-	// 									if (sessionPdpViewRate === 0) {
-	// 										sessionPdpViewRate = '-';
-	// 									}
-	// 									this.getTableDataValue(3).then(
-	// 										(metricsValue) => {
-	// 											expect(
-	// 												metricsValue.text
-	// 											).to.contain(
-	// 												sessionPdpViewRate
-	// 											);
-	// 										}
-	// 									);
-	// 								});
-	// 							} else {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: table,
-	// 									headers: header,
-	// 									body: tablePayload
-	// 								}).then((response) => {
-	// 									const responseBody = response.body;
-	// 									let sessionPdpViewRate =
-	// 										responseBody[0].sessionPdpViewRate;
-	// 									if (sessionPdpViewRate === 0) {
-	// 										sessionPdpViewRate = '-';
-	// 									}
-	// 									this.getTableDataValue(3).then(
-	// 										(metricsValue) => {
-	// 											expect(
-	// 												metricsValue.text
-	// 											).to.contain(
-	// 												sessionPdpViewRate
-	// 											);
-	// 										}
-	// 									);
-	// 								});
-	// 							}
-	// 						});
-	// 					});
-	// 				});
-	// 			});
-	// 		});
-	// }
+	async verifyTableDataWithApi(lastWeekNumberInList: string) {
+		const perfPage = new PerformancePage(this.page);
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		const dateStart = dates.startreversedDateReceived;
+		const dateEnd = dates.endreversedDateReceived;
+
+		await perfPage.clickWeekFilter(lastWeekNumberInList);
+		await perfPage.dateFilterApplyBtnClick();
+
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await (await perfPage.checkUncheckADepartment(1)).click();
+
+		await this.page.click('button:has-text("Confirm")');
+		const category = await perfPage.checkSelectedCategoryIsApplied('1');
+
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+		const departNum = await perfPage.getDepartmentNumber();
+
+		await this.page.click('button:has-text("Confirm")');
+		const companyId = await perfPage.getCompanyId();
+
+		const compnyId = companyId;
+		let categoryNbr = category.text?.split(' ')[0];
+		const dNum = departNum.numberExtracted;
+
+		await (await perfPage.seeDetailsLink()).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		let tableUrl = '';
+		if (process.env.ENV === 'QA') {
+			tableUrl = tableStg;
+		} else if (process.env.ENV === 'PROD') {
+			tableUrl = tableProd;
+		} else {
+			tableUrl = table;
+		}
+
+		const cookieString = await perfPage.getCookie();
+
+		const headers = await perfPage.getHeadersAndCookies(cookieString);
+		const tablePayload = perfPage.getPayloadTable(
+			dateStart,
+			dateEnd,
+			`${dNum}_${categoryNbr}`,
+			compnyId
+		);
+
+		const response = await this.page.request.post(tableUrl, {
+			headers,
+			data: tablePayload
+		});
+
+		const responseBody = await response.json();
+		let sessionPdpViewRate = responseBody[0]?.sessionPdpViewRate || '-';
+
+		const metricsValue = await this.getTableDataValue(3);
+		expect(metricsValue.text).toContain(sessionPdpViewRate);
+	}
 
 	// get table value from session conversion Page
-	// getTableDataValue(cellNumber) {
-	// 	return this.sessionConversionPageElements
-	// 		.tableCell(cellNumber)
-	// 		.invoke('text')
-	// 		.then((text) => {
-	// 			return cy.wrap({ text });
-	// 		});
-	// }
+	async getTableDataValue(cellNumber: number) {
+		const text = this.sessionConversionPageElements
+			.tableCell(cellNumber.toString())
+			.innerText();
+
+		return { text };
+	}
 
 	// for upc check table data with api
-	// checkTableDataWithApi(url, aUpc, lastWeekNumberInList, minWaitTime) {
-	// 	perfPage
-	// 		.datesFromFilter(lastWeekNumberInList, minWaitTime)
-	// 		.then((dates) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			perfPage.clickWeekFilter(lastWeekNumberInList);
-	// 			perfPage.dateFilterApplyBtnClick();
-	// 			perfPage
-	// 				.checkAndClickOnUpcBtn()
-	// 				.click({ timeout: minWaitTime });
-	// 			perfPage.pasteUpcs(aUpc, { timeout: minWaitTime });
-	// 			perfPage.ConfirmBtnUpc().click();
-	// 			cy.wait(minWaitTime);
-	// 			this.seeDetailsLink({ timeout: minWaitTime }).click();
-	// 			this.tableFilterButton().click();
-	// 			this.SelectFilterInTable('Item', { timeout: minWaitTime })
-	// 				.should('be.visible')
-	// 				.click();
-	// 			cy.wait(minWaitTime);
-	// 			if (
-	// 				url == 'https://dev.walmartluminate.com/digitallandscapes/'
-	// 			) {
-	// 				cy.intercept(table).as('table');
-	// 			} else if (
-	// 				url == 'https://stg.walmartluminate.com/digitallandscapes/'
-	// 			) {
-	// 				cy.intercept(tableStg).as('table');
-	// 			} else {
-	// 				cy.intercept(tableProd).as('table');
-	// 			}
-	// 			cy.getCompanyId(url).then((cmpanyId) => {
-	// 				let compnyId = cmpanyId;
-	// 				cy.getCookie('LUMINATE_TOKEN').then((cookie) => {
-	// 					const luminationToken = cookie ? cookie.value : null;
-	// 					let header = new ApiHeaders().getHeadersAndCookies(
-	// 						url,
-	// 						luminationToken
-	// 					);
-	// 					let tablePayload =
-	// 						new ApiPayloads().getTablePayloadForUpc(
-	// 							dateStart,
-	// 							dateEnd,
-	// 							aUpc,
-	// 							compnyId
-	// 						);
-	// 					if (
-	// 						url ==
-	// 						'https://stg.walmartluminate.com/digitallandscapes/'
-	// 					) {
-	// 						cy.request({
-	// 							method: 'POST',
-	// 							url: tableStg,
-	// 							headers: header,
-	// 							body: tablePayload
-	// 						}).then((response) => {
-	// 							const responseBody = response.body;
-	// 							let sessionPdpViewRate =
-	// 								responseBody[0].sessionPdpViewRate;
-	// 							if (sessionPdpViewRate === 0) {
-	// 								sessionPdpViewRate = '-';
-	// 							}
-	// 							this.getTableDataValue(4).then(
-	// 								(metricsValue) => {
-	// 									cy.wait(minWaitTime);
-	// 									expect(metricsValue.text).to.contain(
-	// 										sessionPdpViewRate
-	// 									);
-	// 								}
-	// 							);
-	// 						});
-	// 					} else if (
-	// 						url ==
-	// 						'https://www.walmartluminate.com/digitallandscapes/'
-	// 					) {
-	// 						cy.request({
-	// 							method: 'POST',
-	// 							url: tableProd,
-	// 							headers: header,
-	// 							body: tablePayload
-	// 						}).then((response) => {
-	// 							const responseBody = response.body;
-	// 							let sessionPdpViewRate =
-	// 								responseBody[0].sessionPdpViewRate;
-	// 							if (sessionPdpViewRate === 0) {
-	// 								sessionPdpViewRate = '-';
-	// 							}
-	// 							this.getTableDataValue(4).then(
-	// 								(metricsValue) => {
-	// 									cy.wait(minWaitTime);
-	// 									expect(metricsValue.text).to.contain(
-	// 										sessionPdpViewRate
-	// 									);
-	// 								}
-	// 							);
-	// 						});
-	// 					} else {
-	// 						cy.request({
-	// 							method: 'POST',
-	// 							url: table,
-	// 							headers: header,
-	// 							body: tablePayload
-	// 						}).then((response) => {
-	// 							const responseBody = response.body;
-	// 							let sessionPdpViewRate =
-	// 								responseBody[0].sessionPdpViewRate;
-	// 							if (sessionPdpViewRate === 0) {
-	// 								sessionPdpViewRate = '-';
-	// 							}
-	// 							this.getTableDataValue(4).then(
-	// 								(metricsValue) => {
-	// 									cy.wait(minWaitTime);
-	// 									expect(metricsValue.text).to.contain(
-	// 										sessionPdpViewRate
-	// 									);
-	// 								}
-	// 							);
-	// 						});
-	// 					}
-	// 				});
-	// 			});
-	// 		});
-	// }
+	async checkTableDataWithApi(aUpc: string, lastWeekNumberInList: string) {
+		const perfPage = new PerformancePage(this.page);
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		const dateStart = dates.startreversedDateReceived;
+		const dateEnd = dates.endreversedDateReceived;
+
+		await perfPage.clickWeekFilter(lastWeekNumberInList);
+		await perfPage.dateFilterApplyBtnClick();
+
+		await (await perfPage.checkAndClickOnUpcBtn()).click();
+		await perfPage.pasteUpcs(aUpc);
+		await (await perfPage.ConfirmBtnUpc()).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		await (await this.seeDetailsLink()).click();
+		await (await this.tableFilterButton()).click();
+		await (await this.SelectFilterInTable('Item')).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		let tableUrl = '';
+		if (process.env.ENV === 'QA') {
+			tableUrl = tableStg;
+		} else if (process.env.ENV === 'PROD') {
+			tableUrl = tableProd;
+		} else {
+			tableUrl = table;
+		}
+
+		const companyId = await perfPage.getCompanyId();
+		const cookies = await perfPage.getCookie();
+
+		const headers = await perfPage.getHeadersAndCookies(cookies);
+		const tablePayload = perfPage.getTablePayloadForUpc(
+			dateStart,
+			dateEnd,
+			aUpc,
+			companyId
+		);
+
+		const response = await this.page.request.post(tableUrl, {
+			headers,
+			data: tablePayload
+		});
+
+		const responseBody = await response.json();
+		let sessionPdpViewRate = responseBody[0]?.sessionPdpViewRate || '-';
+
+		const metricsValue = await this.getTableDataValue(4);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		expect(metricsValue.text).toContain(sessionPdpViewRate);
+	}
 }
 
 export default SessionConversionPage;

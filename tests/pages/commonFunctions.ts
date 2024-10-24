@@ -5,6 +5,7 @@ import SessionConversionPage from './sessionConversionPage';
 import SessionSharePage from './sessionSharePage';
 import fs from 'fs';
 import path from 'path';
+import DonutPage from './donutPage';
 
 class CommonClass {
 	protected readonly page: Page;
@@ -14,11 +15,14 @@ class CommonClass {
 		page.goto(getURL());
 	}
 
-	get sessionCoPage() {
+	get sessionConvPage() {
 		return new SessionConversionPage(this.page);
 	}
 	get sessionShPage() {
 		return new SessionSharePage(this.page);
+	}
+	get sotDonutPage() {
+		return new DonutPage(this.page);
 	}
 
 	async waitForAPIResponse(url: string) {
