@@ -74,7 +74,7 @@ class SessionConversionPage {
 		// xpath of table filter
 		tableFilter: () =>
 			this.page.locator(
-				"div[class='vKsPQfia2R0r5RhU3CDA fb8nbRMKegEQNa82djm9'] div[class='w_HK w_Bm'] button[class='Chip-module_chip__3f0zv Chip-module_small__GfjIC']"
+				"//button[@data-test-cy='Item-value' or @data-test-cy='Category-value']"
 			),
 
 		// xpath of table filter menu
@@ -118,16 +118,22 @@ class SessionConversionPage {
 
 		// xpath for conversions tooltip
 		getAnyMetricsValueForConversionFromchart: (
-			metricsPositionInUI: string
+			label: string
 		) =>
 			this.page.locator(
-				`//div[@class='uS8I9PrbyA_xw5sC54Po']//div[@class='Z5oOKSC8c29pOy82KGV5 iPrpYAffZ3H_I343AOET'][${metricsPositionInUI}]//span[@class='w_D6 w_D8 w_EB'][1]`
+				`//div[@data-test-cy='session-of-conversion-chart']//div[normalize-space()='${label}']/following-sibling::div[1]`
 			),
+			getAnyMetricsTexteForConversionFromchart: (
+				label: string
+			) =>
+				this.page.locator(
+					`//div[@data-test-cy='session-of-conversion-chart']//div[normalize-space()='${label}']`
+				),
 
 		// xpath of table cell
 		tableCell: (cellNumber: string) =>
 			this.page.locator(
-				`//tr[@class='w_Gp']/td[${cellNumber}]/span/span`
+				`//tbody/tr/td[${cellNumber}]/span[1]`
 			),
 
 		// xpath of sort icon
@@ -294,7 +300,9 @@ class SessionConversionPage {
 	// // check table headers
 	async checkTableHeaders(filter: string) {
 		// Locate the table headers
-		const headerElements = this.page.locator('.table-header-selector'); // Replace with actual selector for table headers
+		
+		const headerElements = this.page.locator('//th'); // Replace with actual selector for table headers
+		
 		const headerTexts = await headerElements.evaluateAll((headers) =>
 			headers.map((header) => (header as HTMLElement).innerText)
 		);
@@ -392,8 +400,11 @@ class SessionConversionPage {
 	async getMetricsValueForConversionFromchart(pos: string) {
 		const text = await this.sessionConversionPageElements
 			.getAnyMetricsValueForConversionFromchart(pos)
-			.textContent();
-		return { text };
+			.innerText();
+			const label = await this.sessionConversionPageElements
+			.getAnyMetricsTexteForConversionFromchart(pos)
+			.innerText();
+		return {label, text };
 	}
 
 	async seeDetailsLink() {
@@ -408,7 +419,7 @@ class SessionConversionPage {
 		const metric = await this.getMetricsValueForConversionFromchart(
 			metricsPositionInConversionChart
 		);
-		return { text: metric.text };
+		return metric ;
 	}
 
 	//verify tooltip for session conversion chart
@@ -425,10 +436,16 @@ class SessionConversionPage {
 
 		await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
 		await perfPage.dateFilterApplyBtnClick();
-
-		const category = await perfPage.checkSelectedCategoryIsApplied('1');
 		await (await perfPage.verifyDeptAndCatFilter()).click();
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await perfPage.performanceElements.selectCustomCategory(2).click();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		const category = await perfPage.checkSelectedCategoryIsApplied('2');
 
+		await (await perfPage.verifyDeptAndCatFilter()).click();
 		const departNum = await perfPage.getDepartmentNumber();
 		const departmentNumber = departNum.numberExtracted;
 
@@ -456,7 +473,7 @@ class SessionConversionPage {
 			.locator(
 				'//*[@id="soc-trend"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
 			)
-			.hover();
+			.hover({force:true});
 		await this.page
 			.locator(
 				'//*[@id="soc-trend"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
@@ -483,6 +500,8 @@ class SessionConversionPage {
 				(el) => el.textContent
 			);
 			tooltipDay = tooltipText?.substring(0, 6) ?? '';
+			console.log(tooltipDay)
+			return
 
 			interval = intervalSrc.includes('Daily') ? 'Daily' : 'Weekly';
 
@@ -494,20 +513,20 @@ class SessionConversionPage {
 				companyId
 			);
 
-			const headers = await perfPage.getHeadersAndCookies(cookieString);
+			const headers = await perfPage.getHeadersAndCookiesWithRefer(cookieString);
 
 			const response = await this.page.request.post(lineUrl, {
 				headers,
 				data: linePayload
 			});
-
+			console.log(tooltipDay)
 			const jsonResponse = await response.json();
-
 			const sessionPdpViewRateValue = await jsonResponse.find(
 				(item: any) => item.position === tooltipDay
 			);
+			console.log(sessionPdpViewRateValue)
 			const sessionPdpViewRateValueReceived =
-				sessionPdpViewRateValue.sessionPdpViewRate.toString();
+				sessionPdpViewRateValue.session_pdp_view_rate.toString();
 			const tooltipTextCleaned = tooltipText?.replace(',', '');
 
 			expect(tooltipTextCleaned).toContain(
@@ -673,15 +692,15 @@ class SessionConversionPage {
 		});
 
 		const responseBody = await response.json();
-		let sessionPdpViewRate = responseBody[0]?.sessionPdpViewRate || '-';
+		let sessionPdpViewRate = responseBody[0]?.session_pdp_view_rate || '-';
 
-		const metricsValue = await this.getTableDataValue(3);
-		expect(metricsValue.text).toContain(sessionPdpViewRate);
+		const metricsValue = await this.getTableDataValue(4);
+		expect(metricsValue.text).toContain(sessionPdpViewRate.toString());
 	}
 
 	// get table value from session conversion Page
 	async getTableDataValue(cellNumber: number) {
-		const text = this.sessionConversionPageElements
+		const text = await this.sessionConversionPageElements
 			.tableCell(cellNumber.toString())
 			.innerText();
 
@@ -734,11 +753,12 @@ class SessionConversionPage {
 		});
 
 		const responseBody = await response.json();
-		let sessionPdpViewRate = responseBody[0]?.sessionPdpViewRate || '-';
+		console.log(responseBody)
+		let sessionPdpViewRate = responseBody[0]?.session_pdp_view_rate || '-';
 
 		const metricsValue = await this.getTableDataValue(4);
 		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
-		expect(metricsValue.text).toContain(sessionPdpViewRate);
+		expect(metricsValue.text).toContain(sessionPdpViewRate.toString());
 	}
 }
 

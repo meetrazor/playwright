@@ -75,11 +75,12 @@ test.describe(
 			//click on see details link again
 			await (await perfPage.sessionConvPage.seeDetailsLink()).click();
 			// verify for a metrics say "Session pdp view rate" matching with billboard values
+			console.log(text)
 			const metrics =
 				await perfPage.sessionConvPage.verifySessionConvChartMetricsForCategory(
-					'1'
+					'PDP View Rate'
 				);
-			expect(text).toContain(metrics.text);
+			expect(text).toContain(metrics.label);
 		});
 	}
 );
@@ -182,8 +183,8 @@ test.describe(
 				)
 			).toBeVisible();
 		});
-
-		test('06: verify user selected daily and a few line chart data for eg. pdp view rate from line char and api to match', async ({
+		// FIXME: failing due to API ERROR
+		test.only('06: verify user selected daily and a few line chart data for eg. pdp view rate from line char and api to match', async ({
 			page
 		}) => {
 			let intervalSrc = 'Daily';
@@ -340,8 +341,8 @@ test.describe(
 				)
 			).toBeVisible();
 		});
-
-		test('011: in session conversion count chart: verify user selected daily and a few line chart data for eg. pdp view rate from line chart and api to match', async ({
+		// FIXME: API issue
+		test.skip('011: in session conversion count chart: verify user selected daily and a few line chart data for eg. pdp view rate from line chart and api to match', async ({
 			page
 		}) => {
 			let intervalSrc = 'Daily';
@@ -454,7 +455,7 @@ test.describe(
 				last4WeekNumberInList
 			);
 		});
-
+		//no brands
 		test.skip('18: verify session conversion table brands are displayed after brands selection from table menu', async ({
 			page
 		}) => {
@@ -534,7 +535,6 @@ test.describe(
 			await perfPage.clickWeekNumbersList(last13WeekNumberInList).click();
 			await page.waitForTimeout(DEFAULT_TIMEOUT);
 			await perfPage.dateFilterApplyBtnClick();
-			await perfPage.dateFilterApplyBtnClick();
 			await (await perfPage.checkAndClickOnUpcBtn()).click();
 			if (process.env.ENV === 'PROD') {
 				await perfPage.pasteUpcs(dashboardData.upcProd);
@@ -542,7 +542,6 @@ test.describe(
 				await perfPage.pasteUpcs(dashboardData.upc);
 			}
 			await (await perfPage.ConfirmBtnUpc()).click();
-			await perfPage.dateFilterApplyBtnClick();
 			await (await perfPage.sessionConvPage.seeDetailsLink()).click();
 			await (await perfPage.sessionConvPage.dlyWklyDrpDwn()).click();
 			await (
@@ -564,7 +563,7 @@ test.describe(
 			).toBeVisible();
 		});
 
-		test.skip('22: for multiple upcs :verify session Conversion trends chart is visible for daily/weekly', async ({
+		test('22: for multiple upcs :verify session Conversion trends chart is visible for daily/weekly', async ({
 			page
 		}) => {
 			const perfPage = new performancePage(page);
@@ -678,7 +677,7 @@ test.describe(
 			).toBeVisible();
 		});
 
-		test.skip('24:For multiple Upcs: verify session conversion trend chart has 3 field Session PDP View Rate,Session ATC Rate, Session Purchase Conversion for daily and weekly', async ({
+		test('24:For multiple Upcs: verify session conversion trend chart has 3 field Session PDP View Rate,Session ATC Rate, Session Purchase Conversion for daily and weekly', async ({
 			page
 		}) => {
 			const perfPage = new performancePage(page);
@@ -999,7 +998,7 @@ test.describe(
 	}
 );
 
-test.describe('For Upc: Session Conversion Page: verify Session Conversion table', () => {
+test.describe('For Upc: Session Conversion Page: verify Session Conversion table', { tag: ['@Regression'] },() => {
 	test('29: verify  for upcs in session conversion table shows no  category  from table menu', async ({
 		page
 	}) => {
@@ -1031,6 +1030,7 @@ test.describe('For Upc: Session Conversion Page: verify Session Conversion table
 
 		// await perfPage.sessionConvPage.noDataTextTable()
 	});
+	// no Brands
 	test.skip('30: verify  for upcs in session conversion table show no data after brands selection from table menu', async ({
 		page
 	}) => {

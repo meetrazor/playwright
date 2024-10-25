@@ -83,6 +83,17 @@ class CommonClass {
 
 		return headers;
 	}
+	async getHeadersAndCookiesWithRefer(token: string) {
+		const cookieValue = token;
+		const headers = {
+			'Content-Type': 'application/json',
+			Connection: 'keep-alive',
+			referer: `${getURL()}/conversion`,
+			Cookie: cookieValue
+		};
+
+		return headers;
+	}
 	getPayloadBillboardTerm(
 		dateStart: string,
 		dateEnd: string,
@@ -134,7 +145,8 @@ class CommonClass {
 			categories: [category],
 			brands: [],
 			upcs: [],
-			source: 'category'
+			source: 'category',
+			comparisonType: "timePeriod"
 		};
 		return billboardPayloads;
 	}
@@ -153,7 +165,8 @@ class CommonClass {
 			categories: [],
 			brands: [],
 			upcs: [upc],
-			source: 'item'
+			source: 'item',
+			comparisonType: "timePeriod"
 		};
 		return billboardPayloads;
 	}
@@ -194,7 +207,8 @@ class CommonClass {
 			categories: [categoryNbr],
 			brands: [],
 			upcs: [],
-			interval: intervals
+			interval: intervals,
+			comparisonType: 'timePeriod'
 		};
 		return billboardPayloads;
 	}

@@ -65,7 +65,7 @@ class SessionSharePage {
 			),
 		tableFilter: () =>
 			this.page.locator(
-				"div[class='vKsPQfia2R0r5RhU3CDA fb8nbRMKegEQNa82djm9'] div[class='w_HK w_Bm'] button[class='Chip-module_chip__3f0zv Chip-module_small__GfjIC']"
+				"//button[@data-test-cy='Item-value' or @data-test-cy='Category-value']"
 			),
 		tableFilterMenu: () => this.page.locator('.w_FZ[role="menu"]'),
 		tableFilterMenuBtn: () =>
@@ -521,7 +521,7 @@ class SessionSharePage {
 		await perfPage.dateFilterApplyBtnClick();
 
 		const category = await perfPage.checkSelectedCategoryIsApplied('1');
-		await perfPage.verifyDeptAndCatFilter();
+		(await perfPage.verifyDeptAndCatFilter()).click();
 		const departNum = await perfPage.getDepartmentNumber();
 
 		await this.page.locator('button', { hasText: 'Confirm' }).click();
@@ -531,12 +531,14 @@ class SessionSharePage {
 		let categoryNbr = category.convertedText.trim().split(' ')[0];
 		let dNum = departNum.numberExtracted;
 
-		await perfPage.seeDetailsLinkSessionShareChart();
+		(await perfPage.seeDetailsLinkSessionShareChart()).click();
 		await this.dlyWklyDrpDwnFromSessnShareTrendChart();
 		await this.dailyWeeklyFromSessionShareTrend('Daily');
 
 		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
-
+		await this.page
+			.locator('#csos-trend .am5-tooltip-container')
+			.first().scrollIntoViewIfNeeded()
 		await this.page
 			.locator('#csos-trend .am5-tooltip-container')
 			.first()
@@ -725,13 +727,15 @@ class SessionSharePage {
 		});
 
 		const responseBody = await response.json();
-		let pdpSessionShare = responseBody[0].pdpSessionShare;
+	
+		let pdpSessionShare = responseBody[0].pdp_session_share;
 		if (pdpSessionShare === 0) {
 			pdpSessionShare = '-';
 		}
 
-		const metricsValue = await this.getTableDataValue('3');
-		expect(metricsValue.text).toContain(pdpSessionShare);
+		const metricsValue = await this.getTableDataValue('4');
+		console.log(pdpSessionShare,metricsValue.text)
+		expect(metricsValue.text).toContain(pdpSessionShare.toString());
 	}
 	async verifyTableDataWithAPI(lastWeekNumberInList: string, aUpc: string) {
 		const perfPage = new performancePage(this.page);
@@ -780,13 +784,13 @@ class SessionSharePage {
 		});
 
 		const responseBody = await response.json();
-		let pdpSessionShare = responseBody[0].pdpSessionShare;
+		let pdpSessionShare = responseBody[0].pdp_session_share;
 		if (pdpSessionShare === 0) {
 			pdpSessionShare = '-';
 		}
 
 		const metricsValue = await this.getTableDataValue('4');
-		expect(metricsValue.text).toContain(pdpSessionShare);
+		expect(metricsValue.text).toContain(pdpSessionShare.toString());
 	}
 
 	async getTableDataValue(cellNumber: string) {
