@@ -61,9 +61,8 @@ test.describe(
 			const perfPage = new performancePage(page);
 			await perfPage.navigateToDefaultCompany();
 			await perfPage.waitForAPIResponse(categoryHirarchy);
-			await perfPage.dateFilterIcon().click();
-			await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
-			await perfPage.dateFilterApplyBtnClick();
+			await perfPage.selectDateAndCustomCategory(last4WeekNumberInList,1,2)
+			await page.waitForTimeout(DEFAULT_TIMEOUT)
 			await perfPage.verifyvisibilityComponentsOnPerformancePage(
 				getURL()
 			);

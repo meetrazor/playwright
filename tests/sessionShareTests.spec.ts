@@ -197,8 +197,7 @@ test.describe(
 				)
 			).toBeVisible();
 		});
-		// skip for now Error : Element is out of viewout
-		test.skip('007: verify for daily or weekly the value of line charts one of the value for any session share metrics to match with api response', async ({
+		test('007: verify for daily or weekly the value of line charts one of the value for any session share metrics to match with api response', async ({
 			page
 		}) => {
 			const perfPage = new performancePage(page);

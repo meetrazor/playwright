@@ -204,7 +204,6 @@ class SessionSharePage {
 				'#bar-chart-container .am5-tooltip-container div[role="tooltip"]'
 			)
 			.textContent();
-		console.log('Tooltip text:', tooltipText?.trim());
 
 		await this.page.waitForTimeout(4000);
 
@@ -517,10 +516,15 @@ class SessionSharePage {
 		let dateEnd = dates.endreversedDateReceived;
 
 		await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
-		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 		await perfPage.dateFilterApplyBtnClick();
-
-		const category = await perfPage.checkSelectedCategoryIsApplied('1');
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await perfPage.performanceElements.selectCustomCategory(2).click();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		const category = await perfPage.checkSelectedCategoryIsApplied('2');
 		(await perfPage.verifyDeptAndCatFilter()).click();
 		const departNum = await perfPage.getDepartmentNumber();
 
@@ -528,7 +532,7 @@ class SessionSharePage {
 
 		const cmpanyId = await perfPage.getCompanyId();
 		let compnyId = cmpanyId;
-		let categoryNbr = category.convertedText.trim().split(' ')[0];
+		let categoryNbr = category.text?.trim().split(' ')[0];
 		let dNum = departNum.numberExtracted;
 
 		(await perfPage.seeDetailsLinkSessionShareChart()).click();
@@ -536,15 +540,16 @@ class SessionSharePage {
 		await this.dailyWeeklyFromSessionShareTrend('Daily');
 
 		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
 		await this.page
-			.locator('#csos-trend .am5-tooltip-container')
-			.first().scrollIntoViewIfNeeded()
+			.locator('#csos-trend')
+			.boundingBox()
 		await this.page
-			.locator('#csos-trend .am5-tooltip-container')
+			.locator('#csos-trend')
 			.first()
 			.hover({ force: true });
 		await this.page
-			.locator('#csos-trend .am5-tooltip-container')
+			.locator('#csos-trend ')
 			.first()
 			.click({ force: true });
 
@@ -553,7 +558,7 @@ class SessionSharePage {
 			.all();
 
 		const cookieString = await perfPage.getCookie();
-		const header = await perfPage.getHeadersAndCookies(cookieString);
+		const header = await perfPage.getHeadersAndCookiesWithRefer(cookieString);
 
 		for (const [index, tooltipContainer] of tooltips.entries()) {
 			const tooltipText = await tooltipContainer
@@ -562,9 +567,8 @@ class SessionSharePage {
 				.innerText();
 			await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 
-			tooltipDay = tooltipText.substring(0, 6);
+			tooltipDay = tooltipText.substring(0, 8);
 			interval = intervalSrc.includes('Daily') ? 'Daily' : 'Weekly';
-
 			const linePayload = perfPage.getLinePayloadForCategory(
 				dateStart,
 				dateEnd,
@@ -588,12 +592,13 @@ class SessionSharePage {
 			});
 
 			const responseBody = await response.json();
+		
 			const sessionSharePdpValue = responseBody.find(
 				(item: any) => item.position === tooltipDay
 			);
 
 			let sessionSharePdpViewValueReceived =
-				sessionSharePdpValue.pdpSessionShare.toString();
+				sessionSharePdpValue.pdp_session_share.toString();
 			let tooltipValue = tooltipText.toString().replace(',', '');
 
 			expect(tooltipValue).toContain(sessionSharePdpViewValueReceived);
@@ -734,7 +739,6 @@ class SessionSharePage {
 		}
 
 		const metricsValue = await this.getTableDataValue('4');
-		console.log(pdpSessionShare,metricsValue.text)
 		expect(metricsValue.text).toContain(pdpSessionShare.toString());
 	}
 	async verifyTableDataWithAPI(lastWeekNumberInList: string, aUpc: string) {

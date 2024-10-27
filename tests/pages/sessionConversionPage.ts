@@ -329,6 +329,7 @@ class SessionConversionPage {
 		} else {
 			expectedTexts = [
 				filter,
+				'Description',
 				'Change vs Prev Time Period',
 				'Session PDP View Rate (%)',
 				'Change vs Prev Time Period',
@@ -469,14 +470,18 @@ class SessionConversionPage {
 		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
 
 		// Show and click the tooltip container
+		const box = await this.page
+			.locator(
+				'//*[@id="soc-trend"]'
+			).boundingBox()
 		await this.page
 			.locator(
-				'//*[@id="soc-trend"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
+				'//*[@id="soc-trend"]'
 			)
 			.hover({force:true});
 		await this.page
 			.locator(
-				'//*[@id="soc-trend"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
+				'//*[@id="soc-trend"]'
 			)
 			.click({ force: true });
 
@@ -499,9 +504,7 @@ class SessionConversionPage {
 				'[role="tooltip"]',
 				(el) => el.textContent
 			);
-			tooltipDay = tooltipText?.substring(0, 6) ?? '';
-			console.log(tooltipDay)
-			return
+			tooltipDay = tooltipText?.substring(0, 8) ?? '';
 
 			interval = intervalSrc.includes('Daily') ? 'Daily' : 'Weekly';
 
@@ -519,12 +522,10 @@ class SessionConversionPage {
 				headers,
 				data: linePayload
 			});
-			console.log(tooltipDay)
 			const jsonResponse = await response.json();
 			const sessionPdpViewRateValue = await jsonResponse.find(
 				(item: any) => item.position === tooltipDay
 			);
-			console.log(sessionPdpViewRateValue)
 			const sessionPdpViewRateValueReceived =
 				sessionPdpViewRateValue.session_pdp_view_rate.toString();
 			const tooltipTextCleaned = tooltipText?.replace(',', '');
@@ -549,8 +550,14 @@ class SessionConversionPage {
 
 		await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
 		await perfPage.dateFilterApplyBtnClick();
-
-		const category = await perfPage.checkSelectedCategoryIsApplied('1');
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await perfPage.performanceElements.selectCustomCategory(2).click();
+		await this.page.locator('button', { hasText: 'Confirm' }).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		const category = await perfPage.checkSelectedCategoryIsApplied('2');
 		await (await perfPage.verifyDeptAndCatFilter()).click();
 
 		const departNum = await perfPage.getDepartmentNumber();
@@ -577,13 +584,17 @@ class SessionConversionPage {
 
 		// Show and click the tooltip container
 		await this.page
+		.locator(
+			'//*[@id="soc-count"]'
+		).boundingBox()
+		await this.page
 			.locator(
-				'//*[@id="soc-count"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
+				'//*[@id="soc-count"]'
 			)
 			.hover({ force: true });
 		await this.page
 			.locator(
-				'//*[@id="soc-count"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
+				'//*[@id="soc-count"]'
 			)
 			.click({ force: true });
 
@@ -596,7 +607,7 @@ class SessionConversionPage {
 			lineUrl = line;
 		}
 		const cookieString = await perfPage.getCookie();
-		const headers = await perfPage.getHeadersAndCookies(cookieString);
+		const headers = await perfPage.getHeadersAndCookiesWithRefer(cookieString);
 
 		// Get the tooltip text and perform API requests accordingly
 		const tooltipContainers = await this.page
@@ -607,7 +618,7 @@ class SessionConversionPage {
 				'[role="tooltip"]',
 				(el) => el.textContent
 			);
-			tooltipDay = tooltipText?.substring(0, 6) ?? '';
+			tooltipDay = tooltipText?.substring(0, 8) ?? '';
 
 			interval = intervalSrc.includes('Daily') ? 'Daily' : 'Weekly';
 
@@ -625,12 +636,11 @@ class SessionConversionPage {
 			});
 
 			const jsonResponse = await response.json();
-
 			const sessionPdpViewValue = jsonResponse.find(
 				(item: any) => item.position === tooltipDay
 			);
 			const sessionPdpViewValueReceived =
-				sessionPdpViewValue.pdpViewCount.toString();
+				sessionPdpViewValue.pdp_view_count.toString();
 			const tooltipTextCleaned = tooltipText?.replace(',', '');
 
 			expect(tooltipTextCleaned).toContain(sessionPdpViewValueReceived);
@@ -753,7 +763,6 @@ class SessionConversionPage {
 		});
 
 		const responseBody = await response.json();
-		console.log(responseBody)
 		let sessionPdpViewRate = responseBody[0]?.session_pdp_view_rate || '-';
 
 		const metricsValue = await this.getTableDataValue(4);

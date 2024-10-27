@@ -31,15 +31,34 @@ class CommonClass {
 		});
 	}
 
+	async handleDialog(){
+		const dialogSelector = "div[role='dialog']";
+		const interval = setInterval(async()=>{
+			try{
+				const dialog = await this.page.$(dialogSelector);
+				if(dialog){
+					await this.page.click("//button[normalize-space()='Ok, got it!']")
+					clearInterval(interval)
+				}
+			}catch(error){
+
+			}
+		},500)
+		setTimeout(() => {
+			clearInterval(interval)
+		}, 15000);
+	}
+
 	async navigateToDefaultCompany() {
 		await this.page.getByPlaceholder('Search Company').click();
 		await this.page.keyboard.type('Procter', { delay: 200 });
 		await this.page
-			.getByRole('cell', {
-				name: 'THE PROCTER & GAMBLE COMPANY',
-				exact: true
-			})
-			.click();
+		.getByRole('cell', {
+			name: 'THE PROCTER & GAMBLE COMPANY',
+			exact: true
+		})
+		.click();
+		this.handleDialog()
 		await this.page
 			.getByLabel('Digital Landscapes')
 			.getByText('Digital Landscapes')

@@ -75,7 +75,6 @@ test.describe(
 			//click on see details link again
 			await (await perfPage.sessionConvPage.seeDetailsLink()).click();
 			// verify for a metrics say "Session pdp view rate" matching with billboard values
-			console.log(text)
 			const metrics =
 				await perfPage.sessionConvPage.verifySessionConvChartMetricsForCategory(
 					'PDP View Rate'
@@ -183,8 +182,7 @@ test.describe(
 				)
 			).toBeVisible();
 		});
-		// FIXME: failing due to API ERROR
-		test.only('06: verify user selected daily and a few line chart data for eg. pdp view rate from line char and api to match', async ({
+		test('06: verify user selected daily and a few line chart data for eg. pdp view rate from line char and api to match', async ({
 			page
 		}) => {
 			let intervalSrc = 'Daily';
@@ -341,8 +339,7 @@ test.describe(
 				)
 			).toBeVisible();
 		});
-		// FIXME: API issue
-		test.skip('011: in session conversion count chart: verify user selected daily and a few line chart data for eg. pdp view rate from line chart and api to match', async ({
+		test('011: in session conversion count chart: verify user selected daily and a few line chart data for eg. pdp view rate from line chart and api to match', async ({
 			page
 		}) => {
 			let intervalSrc = 'Daily';
