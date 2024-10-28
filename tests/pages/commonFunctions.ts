@@ -31,21 +31,21 @@ class CommonClass {
 		});
 	}
 
-	async handleDialog(){
+	async handleDialog() {
 		const dialogSelector = "div[role='dialog']";
-		const interval = setInterval(async()=>{
-			try{
+		const interval = setInterval(async () => {
+			try {
 				const dialog = await this.page.$(dialogSelector);
-				if(dialog){
-					await this.page.click("//button[normalize-space()='Ok, got it!']")
-					clearInterval(interval)
+				if (dialog) {
+					await this.page.click(
+						"//button[normalize-space()='Ok, got it!']"
+					);
+					clearInterval(interval);
 				}
-			}catch(error){
-
-			}
-		},500)
+			} catch (error) {}
+		}, 500);
 		setTimeout(() => {
-			clearInterval(interval)
+			clearInterval(interval);
 		}, 15000);
 	}
 
@@ -53,12 +53,12 @@ class CommonClass {
 		await this.page.getByPlaceholder('Search Company').click();
 		await this.page.keyboard.type('Procter', { delay: 200 });
 		await this.page
-		.getByRole('cell', {
-			name: 'THE PROCTER & GAMBLE COMPANY',
-			exact: true
-		})
-		.click();
-		this.handleDialog()
+			.getByRole('cell', {
+				name: 'THE PROCTER & GAMBLE COMPANY',
+				exact: true
+			})
+			.click();
+		this.handleDialog();
 		await this.page
 			.getByLabel('Digital Landscapes')
 			.getByText('Digital Landscapes')
@@ -165,7 +165,7 @@ class CommonClass {
 			brands: [],
 			upcs: [],
 			source: 'category',
-			comparisonType: "timePeriod"
+			comparisonType: 'timePeriod'
 		};
 		return billboardPayloads;
 	}
@@ -185,7 +185,7 @@ class CommonClass {
 			brands: [],
 			upcs: [upc],
 			source: 'item',
-			comparisonType: "timePeriod"
+			comparisonType: 'timePeriod'
 		};
 		return billboardPayloads;
 	}
@@ -249,7 +249,8 @@ class CommonClass {
 			brands: [],
 			upcs: [],
 			source: sources,
-			interval: intervals
+			interval: intervals,
+			comparisonType: 'timePeriod'
 		};
 		return sotlinePayloads;
 	}
@@ -272,7 +273,8 @@ class CommonClass {
 			brands: [],
 			upcs: [aUpc, Upcs],
 			source: sources,
-			interval: intervals
+			interval: intervals,
+			comparisonType: 'timePeriod'
 		};
 		return sotlinePayloads;
 	}

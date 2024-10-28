@@ -1,6 +1,18 @@
 import { Page, expect } from '@playwright/test';
-import { DEFAULT_TIMEOUT as minWaitTime } from '../../config';
-import PerformancePage from './performancePage';
+import { DEFAULT_TIMEOUT } from '../../config';
+import performancePage from './performancePage';
+import { donutChart } from '../../shared/apiEndpoints';
+import {
+	sotline,
+	sotlineProd,
+	sotlineStg,
+	sotTable,
+	sotTableProd,
+	sotTableStg,
+	table,
+	tableProd,
+	tableStg
+} from '../../shared/routes';
 
 class DonutPage {
 	page: Page;
@@ -169,200 +181,191 @@ class DonutPage {
 			.count();
 		expect(checkboxes).toBeLessThanOrEqual(5);
 	}
-	// FIXME
-	// async checkTooltipSotDonutChartForUpc(
-	// 	url: string,
-	// 	lastWeekNumberInList: string,
-	// 	intervalSrc: number,
-	// 	source: string,
-	// 	aUpc: string,
-	// 	Upcs: string
-	// ) {
-	// 	let tooltipDay: string;
-	// 	let interval;
-	// 	const perfPage = new PerformancePage(this.page);
-	// 	const dates = await perfPage.datesFromFilter(
-	// 		lastWeekNumberInList,
-	// 		minWaitTime
-	// 	);
-	// 	const dateStart = dates.startreversedDateReceived;
-	// 	const dateEnd = dates.endreversedDateReceived;
 
-	// 	await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
-	// 	await perfPage.dateFilterApplyBtnClick();
+	async checkTooltipSotDonutChartForUpc(
+		lastWeekNumberInList: string,
+		intervalSrc: string,
+		source: string,
+		aUpc: string,
+		Upcs: string
+	) {
+		const perfPage = new performancePage(this.page);
+		let tooltipDay: string;
+		let interval;
+		// Fetch start and end dates
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		let dateStart = dates.startreversedDateReceived;
+		let dateEnd = dates.endreversedDateReceived;
 
-	// 	const companyId = await this.page.evaluate(() => {
-	// 		return cy.getCompanyId(url).then((cmpanyId) => cmpanyId);
-	// 	});
+		// Apply filters
+		await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
+		await perfPage.dateFilterApplyBtnClick();
 
-	// 	await (await this.sotTrendsDefaultDlyAllSrcSelection('Daily')).click();
-	// 	await (await this.selectDailyWeeklySOTTrend('Daily')).click();
-	// 	const tooltipText = await this.page
-	// 		.locator(
-	// 			'//*[@id="line-chart"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
-	// 		)
-	// 		.hover()
-	// 		.textContent();
+		// Fetch company ID
+		const compnyId = await perfPage.getCompanyId();
 
-	// 	const payload = new ApiPayloads().getsotLinePayloadForUPC(
-	// 		dateStart,
-	// 		dateEnd,
-	// 		aUpc,
-	// 		Upcs,
-	// 		interval,
-	// 		companyId,
-	// 		source
-	// 	);
-	// 	const response = await this.page.request.post(sotlineProd, {
-	// 		data: payload
-	// 	});
-	// 	const responseBody = await response.json();
-	// 	const pdpCnt = responseBody.find(
-	// 		(item) => item.position === tooltipDay
-	// 	);
-	// 	expect(tooltipText).toContain(pdpCnt['Mobile App Non-Search']);
-	// }
-	// verifyTableHeaders(filter) {
-	// 	cy.get('table.w_GQ thead th').should(($headers) => {
-	// 		// Extract the text content of the headers
-	// 		const headerTexts = $headers
-	// 			.map((index, header) => Cypress.$(header).text())
-	// 			.get();
-	// 		// Define the expected text values
-	// 		const expectedTexts = [
-	// 			filter,
-	// 			'Change vs Prev Time Period',
-	// 			'PDP Views'
-	// 		];
-	// 		// Check if the expected text values are present in the headers
-	// 		expect(headerTexts).to.deep.equal(expectedTexts);
-	// 	});
-	// }
+		// Go to SOT chart and set display to Daily
+		await (await perfPage.seeDetailsLinkSOTChart()).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await (await this.sotTrendsDefaultDlyAllSrcSelection('Daily')).click();
+		await (await this.selectDailyWeeklySOTTrend('Daily')).click();
+
+		// Display and interact with tooltips on the chart
+		const tooltips = await this.page
+			.locator('#line-chart .am5-tooltip-container [role="tooltip"]')
+			.all();
+		for (const tooltip of tooltips) {
+			await tooltip.hover({ force: true });
+			const tooltipText = await tooltip.textContent();
+			tooltipDay = tooltipText?.substring(0, 6) ?? '';
+
+			// // Set API endpoint and payload
+			let url: string;
+			if (process.env.ENV === 'PROD') {
+				url = sotlineProd;
+			} else if (process.env.ENV === 'QA') {
+				url = sotlineStg;
+			} else {
+				url = sotline;
+			}
+
+			const luminationToken = await perfPage.getCookie();
+			const header = await perfPage.getHeadersAndCookies(luminationToken);
+
+			// Check interval type
+			interval = intervalSrc.includes('Daily') ? 'Daily' : 'Weekly';
+			const linePayload = perfPage.getsotLinePayloadForUPC(
+				dateStart,
+				dateEnd,
+				aUpc,
+				Upcs,
+				interval,
+				compnyId,
+				source
+			);
+
+			// Make API request
+			const response = await this.page.request.post(url, {
+				headers: header,
+				data: linePayload
+			});
+			const responseBody = await response.json();
+
+			// Extract and compare tooltip data
+			const pdpCnt = responseBody.find(
+				(item: any) => item.position === tooltipDay
+			);
+			const mobileNonSearchCnt = pdpCnt
+				? pdpCnt['Mobile App Non-Search']
+				: '-';
+
+			const tooltipCleaned = tooltipText?.replace(',', '');
+			expect(tooltipCleaned).toContain(mobileNonSearchCnt);
+		}
+	}
+
+	async verifyTableHeaders(filter: string) {
+		const headers = this.page.locator('table thead th');
+		const expectedTexts = [
+			filter,
+			'Change vs Prev Time Period',
+			'PDP Views'
+		];
+
+		const headerTexts = [];
+		for (let i = 0; i < (await headers.count()); i++) {
+			const headerText = await headers.nth(i).textContent();
+			headerTexts.push(headerText?.trim() ?? '');
+		}
+
+		expect(headerTexts).toEqual(expectedTexts);
+	}
 
 	// // check table data with api
-	// verifyTableDataWithApi(url, lastWeekNumberInList, minWaitTime) {
-	// 	perfPage
-	// 		.datesFromFilter(lastWeekNumberInList, minWaitTime)
-	// 		.then((dates) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			perfPage.clickWeekFilter(lastWeekNumberInList);
-	// 			perfPage.dateFilterApplyBtnClick();
-	// 			perfPage
-	// 				.verifyDeptAndCatFilter({ timeout: minWaitTime })
-	// 				.click();
-	// 			perfPage.checkUncheckADepartment(1).click();
-	// 			perfPage.checkUncheckADepartment(1).click();
-	// 			cy.contains('button', 'Confirm').click();
-	// 			perfPage.checkSelectedCategoryIsApplied(1).then((category) => {
-	// 				perfPage
-	// 					.verifyDeptAndCatFilter({ timeout: minWaitTime })
-	// 					.click();
-	// 				perfPage.getDepartmentNumber().then((departNum) => {
-	// 					cy.contains('button', 'Confirm').click();
-	// 					cy.getCompanyId(url).then((cmpanyId) => {
-	// 						let compnyId = cmpanyId;
-	// 						let categoryNbr = category.text;
-	// 						let dNum = departNum.numberExtracted;
-	// 						categoryNbr = categoryNbr.split(' ')[0];
-	// 						this.seeDetailsLinkSOTChart({
-	// 							timeout: minWaitTime
-	// 						}).click();
-	// 						// select category option
-	// 						cy.wait(minWaitTime);
-	// 						sotDonutPage.tabelMenuButton().click();
-	// 						sotDonutPage
-	// 							.tableMenuFilterSelect('Category')
-	// 							.click();
-	// 						cy.wait(minWaitTime);
-	// 						if (
-	// 							url ==
-	// 							'https://stg.walmartluminate.com/digitallandscapes/'
-	// 						) {
-	// 							cy.intercept(tableStg).as('table');
-	// 						} else {
-	// 							cy.intercept(table).as('table');
-	// 						}
-	// 						cy.getCookie('LUMINATE_TOKEN').then((cookie) => {
-	// 							const luminationToken = cookie
-	// 								? cookie.value
-	// 								: null;
-	// 							let header =
-	// 								new ApiHeaders().getHeadersAndCookies(
-	// 									url,
-	// 									luminationToken
-	// 								);
-	// 							let tablePayload =
-	// 								new ApiPayloads().getPayloadTable(
-	// 									dateStart,
-	// 									dateEnd,
-	// 									dNum + '_' + categoryNbr,
-	// 									compnyId
-	// 								);
-	// 							if (
-	// 								url ==
-	// 								'https://stg.walmartluminate.com/digitallandscapes/'
-	// 							) {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: tableStg,
-	// 									headers: header,
-	// 									body: tablePayload
-	// 								}).then((response) => {
-	// 									const responseBody = response.body;
-	// 									let pdpViewCount =
-	// 										responseBody[0].pdpViewCount;
-	// 									if (pdpViewCount === 0) {
-	// 										pdpViewCount = '-';
-	// 									}
-	// 									this.getTableDataValue(3).then(
-	// 										(metricsValue) => {
-	// 											let pdpValue =
-	// 												metricsValue.text;
-	// 											pdpValue = pdpValue.replace(
-	// 												',',
-	// 												''
-	// 											);
-	// 											expect(pdpValue).to.contain(
-	// 												pdpViewCount
-	// 											);
-	// 										}
-	// 									);
-	// 								});
-	// 							} else {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: table,
-	// 									headers: header,
-	// 									body: tablePayload
-	// 								}).then((response) => {
-	// 									const responseBody = response.body;
-	// 									let pdpViewCount =
-	// 										responseBody[0].pdpViewCount;
-	// 									if (pdpViewCount === 0) {
-	// 										pdpViewCount = '-';
-	// 									}
-	// 									this.getTableDataValue(3).then(
-	// 										(metricsValue) => {
-	// 											let pdpValue =
-	// 												metricsValue.text;
-	// 											pdpValue = pdpValue.replace(
-	// 												',',
-	// 												''
-	// 											);
-	// 											expect(pdpValue).to.contain(
-	// 												pdpViewCount
-	// 											);
-	// 										}
-	// 									);
-	// 								});
-	// 							}
-	// 						});
-	// 					});
-	// 				});
-	// 			});
-	// 		});
-	// }
+	async verifyTableDataWithApi(lastWeekNumberInList: string, aUpc?: string) {
+		// Fetch start and end dates
+		const perfPage = new performancePage(this.page);
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		let dateStart = dates.startreversedDateReceived;
+		let dateEnd = dates.endreversedDateReceived;
+
+		// Apply week filter and date filter
+		await perfPage.clickWeekFilter(lastWeekNumberInList);
+		await perfPage.dateFilterApplyBtnClick();
+
+		// Item-specific flow
+		if (aUpc) {
+			await (await perfPage.checkAndClickOnUpcBtn()).click();
+			await perfPage.pasteUpcs(aUpc);
+			await (await perfPage.ConfirmBtnUpc()).click();
+		} else {
+			await (await perfPage.verifyDeptAndCatFilter()).click();
+			await (await perfPage.checkUncheckADepartment(1)).click();
+			await (await perfPage.checkUncheckADepartment(1)).click();
+			await this.page.locator('button:has-text("Confirm")').click();
+		}
+
+		await (await this.seeDetailsLinkSOTChart()).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		// Set up the menu options based on category or item flow
+		await (await perfPage.sotDonutPage.tabelMenuButton()).click();
+		const menuOption = aUpc ? 'Item' : 'Category';
+		await (
+			await perfPage.sotDonutPage.tableMenuFilterSelect(menuOption)
+		).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		let url: string;
+		if (process.env.ENV === 'PROD') {
+			url = tableProd;
+		} else if (process.env.ENV === 'QA') {
+			url = tableStg;
+		} else {
+			url = table;
+		}
+
+		// Fetch company ID and authentication token
+		const compnyId = await perfPage.getCompanyId();
+		const luminationToken = await perfPage.getCookie();
+
+		// Set headers and payload
+		const header = await perfPage.getHeadersAndCookies(luminationToken);
+		let tablePayload;
+		if (aUpc) {
+			tablePayload = perfPage.getTablePayloadForUpc(
+				dateStart,
+				dateEnd,
+				aUpc,
+				compnyId
+			);
+		} else {
+			const categoryNbr = (
+				await perfPage.checkSelectedCategoryIsApplied('1')
+			).text?.split(' ')[0];
+			const dNum = (await perfPage.getDepartmentNumber()).numberExtracted;
+			tablePayload = perfPage.getPayloadTable(
+				dateStart,
+				dateEnd,
+				`${dNum}_${categoryNbr}`,
+				compnyId
+			);
+		}
+
+		// Send the API request and validate table data
+		const response = await this.page.request.post(url, {
+			headers: header,
+			data: tablePayload
+		});
+		const responseBody = await response.json();
+		let pdpViewCount = responseBody[0]?.pdpViewCount || '-';
+
+		const cellIndex = aUpc ? 4 : 3;
+		const metricsValue = await this.getTableDataValue(cellIndex.toString());
+		const pdpValue = metricsValue.text.replace(',', '');
+
+		expect(pdpValue).toContain(pdpViewCount);
+	}
 
 	// // validate table data for item with api
 	// verifyTableDataWithAPI(url, lastWeekNumberInList, minWaitTime, aUpc) {
@@ -458,481 +461,172 @@ class DonutPage {
 	// }
 
 	// // get table value from session conversion Page
-	// getTableDataValue(cellNumber) {
-	// 	return this.donutPageElements
-	// 		.tableCell(cellNumber)
-	// 		.invoke('text')
-	// 		.then((text) => {
-	// 			return cy.wrap({ text });
-	// 		});
-	// }
+	async getTableDataValue(cellNumber: string) {
+		const text = await this.donutPageElements
+			.tableCell(cellNumber)
+			.innerText();
+
+		return { text };
+	}
 
 	// //verify tooltip for donut chart for upcs
-	// checkTooltipSotDonutChart(
-	// 	url,
-	// 	lastWeekNumberInList,
-	// 	minWaitTime,
-	// 	intervalSrc,
-	// 	source
-	// ) {
-	// 	let tooltipDay;
-	// 	let interval;
-	// 	perfPage
-	// 		.datesFromFilter(lastWeekNumberInList, minWaitTime)
-	// 		.then((dates) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
-	// 			cy.wait(minWaitTime);
-	// 			perfPage.dateFilterApplyBtnClick();
-	// 			cy.waitForLoadDonutAPI(url);
-	// 			perfPage.checkSelectedCategoryIsApplied(1).then((category) => {
-	// 				perfPage
-	// 					.verifyDeptAndCatFilter({ timeout: minWaitTime })
-	// 					.click();
-	// 				perfPage.getDepartmentNumber().then((departNum) => {
-	// 					cy.contains('button', 'Confirm').click();
-	// 					cy.getCompanyId(url).then((cmpanyId) => {
-	// 						let compnyId = cmpanyId;
-	// 						let categoryNbr = category.text;
-	// 						let dNum = departNum.numberExtracted;
-	// 						perfPage
-	// 							.seeDetailsLinkSOTChart({
-	// 								timeout: minWaitTime
-	// 							})
-	// 							.click();
-	// 						cy.wait(minWaitTime);
-	// 						this.sotTrendsDefaultDlyAllSrcSelection(
-	// 							'Daily'
-	// 						).click();
-	// 						this.selectDailyWeeklySOTTrend('Daily').click();
-	// 						cy.xpath(
-	// 							'//*[@id="line-chart"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
-	// 						).invoke('show');
-	// 						cy.xpath(
-	// 							'//*[@id="line-chart"]//div[@class="am5-tooltip-container"]//div[@role="tooltip"][1]'
-	// 						).click({ force: true });
-	// 						cy.get('#line-chart .am5-tooltip-container').invoke(
-	// 							'show'
-	// 						);
-	// 						cy.get('#line-chart .am5-tooltip-container').click({
-	// 							force: true
-	// 						});
-	// 						cy.xpath(
-	// 							"//div[@id='line-chart']//canvas[@class='am5-layer-30']"
-	// 						)
-	// 							.invoke('show')
-	// 							.click({ force: true });
-	// 						cy.get('#line-chart .am5-tooltip-container').each(
-	// 							($tooltipContainer, index) => {
-	// 								cy.wrap($tooltipContainer)
-	// 									.find('[role="tooltip"]')
-	// 									.eq(index)
-	// 									.invoke('mouseover')
-	// 									.then(() => {
-	// 										cy.wrap($tooltipContainer)
-	// 											.find('[role="tooltip"]')
-	// 											.eq(index)
-	// 											.invoke('text')
-	// 											.then((tooltipText) => {
-	// 												if (
-	// 													url ==
-	// 													'https://stg.walmartluminate.com/digitallandscapes/'
-	// 												) {
-	// 													cy.intercept(
-	// 														sotlineStg
-	// 													).as('sotline');
-	// 												} else if (
-	// 													url ==
-	// 													'https://www.walmartluminate.com/digitallandscapes/'
-	// 												) {
-	// 													cy.intercept(
-	// 														sotlineProd
-	// 													).as('billboard');
-	// 												} else {
-	// 													cy.intercept(
-	// 														sotline
-	// 													).as('sotline');
-	// 												}
-	// 												cy.getCookie(
-	// 													'LUMINATE_TOKEN'
-	// 												).then((cookie) => {
-	// 													const luminationToken =
-	// 														cookie
-	// 															? cookie.value
-	// 															: null;
-	// 													let header =
-	// 														new ApiHeaders().getHeadersAndCookies(
-	// 															url,
-	// 															luminationToken
-	// 														);
-	// 													categoryNbr =
-	// 														categoryNbr.split(
-	// 															' '
-	// 														)[0];
-	// 													let startDate =
-	// 														new Date(dateStart);
-	// 													let endDate = new Date(
-	// 														dateEnd
-	// 													);
-	// 													cy.oneDayPreviousDate(
-	// 														startDate,
-	// 														endDate
-	// 													).then(
-	// 														(datenumeric) => {
-	// 															tooltipDay =
-	// 																tooltipText.substring(
-	// 																	0,
-	// 																	6
-	// 																);
-	// 															if (
-	// 																intervalSrc.includes(
-	// 																	'Daily'
-	// 																)
-	// 															) {
-	// 																interval =
-	// 																	'Daily';
-	// 															} else {
-	// 																interval =
-	// 																	'Weekly';
-	// 															}
-	// 															let linePayload =
-	// 																new ApiPayloads().getsotLinePayloadForCategory(
-	// 																	dateStart,
-	// 																	dateEnd,
-	// 																	dNum +
-	// 																		'_' +
-	// 																		categoryNbr,
-	// 																	interval,
-	// 																	compnyId,
-	// 																	source
-	// 																);
-	// 															if (
-	// 																url ==
-	// 																'https://stg.walmartluminate.com/digitallandscapes/'
-	// 															) {
-	// 																cy.request({
-	// 																	method: 'POST',
-	// 																	url: sotlineStg,
-	// 																	headers:
-	// 																		header,
-	// 																	body: linePayload
-	// 																}).then(
-	// 																	(
-	// 																		response
-	// 																	) => {
-	// 																		tooltipDay =
-	// 																			tooltipText.substring(
-	// 																				0,
-	// 																				6
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		let pdpCnt =
-	// 																			response.body.find(
-	// 																				(
-	// 																					item
-	// 																				) =>
-	// 																					item.position ===
-	// 																					tooltipDay
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		let mobileNonSearchCnt =
-	// 																			pdpCnt[
-	// 																				'Mobile App Non-Search'
-	// 																			];
-	// 																		tooltipText =
-	// 																			tooltipText.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.replace(
-	// 																				',',
-	// 																				''
-	// 																			);
-	// 																		expect(
-	// 																			tooltipText
-	// 																		).contains(
-	// 																			mobileNonSearchCnt
-	// 																		);
-	// 																	}
-	// 																);
-	// 															} else if (
-	// 																url ==
-	// 																'https://www.walmartluminate.com/digitallandscapes/'
-	// 															) {
-	// 																cy.request({
-	// 																	method: 'POST',
-	// 																	url: sotlineProd,
-	// 																	headers:
-	// 																		header,
-	// 																	body: linePayload
-	// 																}).then(
-	// 																	(
-	// 																		response
-	// 																	) => {
-	// 																		tooltipDay =
-	// 																			tooltipText.substring(
-	// 																				0,
-	// 																				6
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		let pdpCnt =
-	// 																			response.body.find(
-	// 																				(
-	// 																					item
-	// 																				) =>
-	// 																					item.position ===
-	// 																					tooltipDay
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		let mobileNonSearchCnt =
-	// 																			pdpCnt[
-	// 																				'Mobile App Non-Search'
-	// 																			];
-	// 																		tooltipText =
-	// 																			tooltipText.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.replace(
-	// 																				',',
-	// 																				''
-	// 																			);
-	// 																		expect(
-	// 																			tooltipText
-	// 																		).contains(
-	// 																			mobileNonSearchCnt
-	// 																		);
-	// 																	}
-	// 																);
-	// 															} else {
-	// 																cy.request({
-	// 																	method: 'POST',
-	// 																	url: sotline,
-	// 																	headers:
-	// 																		header,
-	// 																	body: linePayload
-	// 																}).then(
-	// 																	(
-	// 																		response
-	// 																	) => {
-	// 																		tooltipDay =
-	// 																			tooltipText.substring(
-	// 																				0,
-	// 																				6
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		let pdpCnt =
-	// 																			response.body.find(
-	// 																				(
-	// 																					item
-	// 																				) =>
-	// 																					item.position ===
-	// 																					tooltipDay
-	// 																			);
-	// 																		cy.wait(
-	// 																			minWaitTime
-	// 																		);
-	// 																		let mobileNonSearchCnt =
-	// 																			pdpCnt[
-	// 																				'Mobile App Non-Search'
-	// 																			];
-	// 																		tooltipText =
-	// 																			tooltipText.toString();
-	// 																		tooltipText =
-	// 																			tooltipText.replace(
-	// 																				',',
-	// 																				''
-	// 																			);
-	// 																		expect(
-	// 																			tooltipText
-	// 																		).contains(
-	// 																			mobileNonSearchCnt
-	// 																		);
-	// 																	}
-	// 																);
-	// 															}
-	// 														}
-	// 													);
-	// 												});
-	// 											});
-	// 									});
-	// 							}
-	// 						);
-	// 					});
-	// 				});
-	// 			});
-	// 		});
-	// }
+	async checkTooltipSotDonutChart(
+		lastWeekNumberInList: string,
+		intervalSrc: string,
+		source: string
+	) {
+		const perfPage = new performancePage(this.page);
+		let tooltipDay: string;
+		let interval;
+
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		let dateStart = dates.startreversedDateReceived;
+		let dateEnd = dates.endreversedDateReceived;
+
+		await perfPage.clickWeekNumbersList(lastWeekNumberInList).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await perfPage.dateFilterApplyBtnClick();
+		await perfPage.waitForAPIResponse(donutChart);
+
+		const category = await perfPage.checkSelectedCategoryIsApplied('1');
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+		const departNum = await perfPage.getDepartmentNumber();
+
+		await this.page.locator('button:has-text("Confirm")').click();
+
+		const compnyId = await perfPage.getCompanyId();
+		let categoryNbr = category?.text?.split(' ')[0];
+		let dNum = departNum.numberExtracted;
+
+		await (await perfPage.seeDetailsLinkSOTChart()).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		await (await this.sotTrendsDefaultDlyAllSrcSelection('Daily')).click();
+		await (await this.selectDailyWeeklySOTTrend('Daily')).click();
+
+		const tooltipContainers = this.page.locator('#line-chart ');
+		await tooltipContainers.boundingBox();
+		const tooltips = await tooltipContainers.elementHandles();
+
+		for (const tooltipContainer of tooltips) {
+			await tooltipContainer.hover({ force: true });
+
+			const tooltipText = await tooltipContainer.innerText();
+			let url: string;
+			if (process.env.ENV === 'PROD') {
+				url = sotlineProd;
+			} else if (process.env.ENV === 'QA') {
+				url = sotlineStg;
+			} else {
+				url = sotline;
+			}
+
+			const cookie = await perfPage.getCookie();
+			const header = await perfPage.getHeadersAndCookies(cookie);
+
+			interval = intervalSrc.includes('Daily') ? 'Daily' : 'Weekly';
+			const linePayload = perfPage.getsotLinePayloadForCategory(
+				dateStart,
+				dateEnd,
+				`${dNum}_${categoryNbr}`,
+				interval,
+				compnyId,
+				source
+			);
+
+			const response = await this.page.request.post(url, {
+				headers: header,
+				data: linePayload
+			});
+
+			const responseBody = await response.json();
+			tooltipDay = tooltipText.substring(0, 8);
+
+			const pdpCnt = responseBody.find(
+				(item: any) => item.position === tooltipDay
+			);
+			const mobileNonSearchCnt = pdpCnt['Mobile App Non-Search'];
+
+			const cleanedTooltipText = tooltipText.replace(',', '');
+			expect(cleanedTooltipText).toContain(mobileNonSearchCnt);
+		}
+	}
 
 	// // check table data with api
-	// verifyTableDataWithApiSOT(url, lastWeekNumberInList, minWaitTime) {
-	// 	perfPage
-	// 		.datesFromFilter(lastWeekNumberInList, minWaitTime)
-	// 		.then((dates) => {
-	// 			let dateStart = dates.startreversedDateReceived;
-	// 			let dateEnd = dates.endreversedDateReceived;
-	// 			perfPage.clickWeekFilter(lastWeekNumberInList);
-	// 			cy.wait(minWaitTime);
-	// 			perfPage.dateFilterApplyBtnClick();
-	// 			perfPage
-	// 				.verifyDeptAndCatFilter({ timeout: minWaitTime })
-	// 				.click();
-	// 			perfPage.checkUncheckADepartment(1).click();
-	// 			perfPage.checkUncheckADepartment(1).click();
-	// 			cy.contains('button', 'Confirm').click();
-	// 			perfPage.checkSelectedCategoryIsApplied(1).then((category) => {
-	// 				perfPage
-	// 					.verifyDeptAndCatFilter({ timeout: minWaitTime })
-	// 					.click();
-	// 				perfPage.getDepartmentNumber().then((departNum) => {
-	// 					cy.contains('button', 'Confirm').click();
-	// 					cy.getCompanyId(url).then((cmpanyId) => {
-	// 						let compnyId = cmpanyId;
-	// 						let categoryNbr = category.text;
-	// 						let dNum = departNum.numberExtracted;
-	// 						categoryNbr = categoryNbr.split(' ')[0];
-	// 						cy.wait(minWaitTime);
-	// 						sotDonutPage.tabelMenuButton().click();
-	// 						sotDonutPage
-	// 							.tableMenuFilterSelect('All Sources')
-	// 							.click();
-	// 						cy.wait(minWaitTime);
-	// 						if (
-	// 							url ==
-	// 							'https://stg.walmartluminate.com/digitallandscapes/'
-	// 						) {
-	// 							cy.intercept(sotTableStg).as('table');
-	// 						} else if (
-	// 							url ==
-	// 							'https://www.walmartluminate.com/digitallandscapes/'
-	// 						) {
-	// 							cy.intercept(sotTableProd).as('table');
-	// 						} else {
-	// 							cy.intercept(sotTable).as('table');
-	// 						}
-	// 						cy.getCookie('LUMINATE_TOKEN').then((cookie) => {
-	// 							const luminationToken = cookie
-	// 								? cookie.value
-	// 								: null;
-	// 							let header =
-	// 								new ApiHeaders().getHeadersAndCookies(
-	// 									url,
-	// 									luminationToken
-	// 								);
-	// 							let tablePayload =
-	// 								new ApiPayloads().getPayloadTable(
-	// 									dateStart,
-	// 									dateEnd,
-	// 									dNum + '_' + categoryNbr,
-	// 									compnyId
-	// 								);
-	// 							if (
-	// 								url ==
-	// 								'https://stg.walmartluminate.com/digitallandscapes/'
-	// 							) {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: sotTableStg,
-	// 									headers: header,
-	// 									body: tablePayload
-	// 								}).then((response) => {
-	// 									const responseBody = response.body;
-	// 									const pdp = responseBody[0];
-	// 									const pdpViewCount = pdp.pdpViewCount;
-	// 									this.getTableDataValue(3).then(
-	// 										(metricsValue) => {
-	// 											let valueFromTable =
-	// 												metricsValue.text;
-	// 											valueFromTable =
-	// 												valueFromTable.replace(
-	// 													',',
-	// 													''
-	// 												);
-	// 											expect(
-	// 												valueFromTable
-	// 											).to.contain(pdpViewCount);
-	// 										}
-	// 									);
-	// 								});
-	// 							} else if (
-	// 								url ==
-	// 								'https://www.walmartluminate.com/digitallandscapes/'
-	// 							) {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: sotTableProd,
-	// 									headers: header,
-	// 									body: tablePayload
-	// 								}).then((response) => {
-	// 									const responseBody = response.body;
-	// 									const pdp = responseBody[0];
-	// 									const pdpViewCount = pdp.pdpViewCount;
-	// 									this.getTableDataValue(3).then(
-	// 										(metricsValue) => {
-	// 											let valueFromTable =
-	// 												metricsValue.text;
-	// 											valueFromTable =
-	// 												valueFromTable.replace(
-	// 													',',
-	// 													''
-	// 												);
-	// 											expect(
-	// 												valueFromTable
-	// 											).to.contain(pdpViewCount);
-	// 										}
-	// 									);
-	// 								});
-	// 							} else {
-	// 								cy.request({
-	// 									method: 'POST',
-	// 									url: sotTable,
-	// 									headers: header,
-	// 									body: tablePayload
-	// 								}).then((response) => {
-	// 									const responseBody = response.body;
-	// 									const pdp = responseBody[0];
-	// 									const pdpViewCount = pdp.pdpViewCount;
-	// 									this.getTableDataValue(3).then(
-	// 										(metricsValue) => {
-	// 											let valueFromTable =
-	// 												metricsValue.text;
-	// 											valueFromTable =
-	// 												valueFromTable.replace(
-	// 													',',
-	// 													''
-	// 												);
-	// 											expect(
-	// 												valueFromTable
-	// 											).to.contain(pdpViewCount);
-	// 										}
-	// 									);
-	// 								});
-	// 							}
-	// 						});
-	// 					});
-	// 				});
-	// 			});
-	// 		});
-	// }
+	async verifyTableDataWithApiSOT(lastWeekNumberInList: string) {
+		const perfPage = new performancePage(this.page);
+		const dates = await perfPage.datesFromFilter(lastWeekNumberInList);
+		let dateStart = dates.startreversedDateReceived;
+		let dateEnd = dates.endreversedDateReceived;
 
-	async verifyToolTipMessage(minWaitTime: number) {
+		await perfPage.clickWeekFilter(lastWeekNumberInList);
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await perfPage.dateFilterApplyBtnClick();
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await (await perfPage.checkUncheckADepartment(1)).click();
+		await this.page.locator('button:has-text("Confirm")').click();
+
+		const category = await perfPage.checkSelectedCategoryIsApplied('1');
+		await (await perfPage.verifyDeptAndCatFilter()).click();
+		const departNum = await perfPage.getDepartmentNumber();
+
+		await this.page.locator('button:has-text("Confirm")').click();
+
+		const compnyId = await perfPage.getCompanyId();
+		let categoryNbr = category.text?.split(' ')[0];
+		let dNum = departNum.numberExtracted;
+
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+		await (await this.tabelMenuButton()).click();
+		await (
+			await perfPage.sotDonutPage.tableMenuFilterSelect('All Sources')
+		).click();
+		await this.page.waitForTimeout(DEFAULT_TIMEOUT);
+
+		const luminationToken = await perfPage.getCookie();
+		const header = await perfPage.getHeadersAndCookies(luminationToken);
+
+		const tablePayload = perfPage.getPayloadTable(
+			dateStart,
+			dateEnd,
+			`${dNum}_${categoryNbr}`,
+			compnyId
+		);
+
+		let requestUrl;
+		if (process.env.ENV === 'PROD') {
+			requestUrl = sotTableStg;
+		} else if (process.env.ENV === 'QA') {
+			requestUrl = sotTableProd;
+		} else {
+			requestUrl = sotTable;
+		}
+
+		const response = await this.page.request.post(requestUrl, {
+			headers: header,
+			data: tablePayload
+		});
+		const responseBody = await response.json();
+		const pdpViewCount = responseBody[0]?.pdpViewCount || 0;
+
+		const metricsValue = await this.getTableDataValue('3');
+		let valueFromTable = metricsValue.text.replace(',', '');
+
+		expect(valueFromTable).toContain(pdpViewCount);
+	}
+
+	async verifyToolTipMessage() {
 		await this.donutPageElements
 			.donutHoverText()
-			.hover({ timeout: minWaitTime });
+			.hover({ timeout: DEFAULT_TIMEOUT });
 		await expect(this.donutPageElements.messageAfterHover()).toBeVisible();
 	}
 
-	async verifyToolTipMessageTrendsChart(minWaitTime: number) {
+	async verifyToolTipMessageTrendsChart() {
 		await this.donutPageElements
 			.donutHoverTextTrendChart()
-			.hover({ timeout: minWaitTime });
+			.hover({ timeout: DEFAULT_TIMEOUT });
 		await expect(
 			this.donutPageElements.messageAfterHoverTrendChart()
 		).toBeVisible();
